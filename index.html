@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KARACABAY INVEST | v73 GÜVENLİ GİRİŞ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- GÜVENLİK KİLİDİ TASARIMI --- */
+        #securityOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #2c3e50 0%, #000 100%); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; color: white; text-align: center; padding: 20px; box-sizing: border-box; }
+        .security-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); padding: 30px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.2); max-width: 400px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .device-id-box { background: #fff; color: #333; font-family: monospace; font-size: 28px; font-weight: bold; letter-spacing: 3px; padding: 15px; margin: 20px 0; border-radius: 8px; border: 2px dashed #f39c12; user-select: all; cursor: pointer; }
+        .sec-btn { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.2s; }
+        .sec-btn:active { transform: scale(0.98); }
+        .sec-input { width: 100%; padding: 15px; border-radius: 8px; border: none; text-align: center; font-size: 18px; margin-top: 10px; box-sizing: border-box; }
+        .copy-hint { font-size: 12px; color: #aaa; margin-top: 5px; }
+
+        /* --- v73 UYGULAMA STİLLERİ --- */
+        :root { --primary: #2c3e50; --secondary: #3498db; --shared: #9b59b6; --accent: #27ae60; --danger: #c0392b; --link-color: #e67e22; --calc-color: #2980b9; --tool-bg: #f8f9fa; --sold: #d63031; --whatsapp: #25D366; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f3; margin: 0; padding: 10px; color: #333; -webkit-tap-highlight-color: transparent; }
+        #appContainer { display: none; } /* Kilit açılana kadar gizli */
+        
+        .container { max-width: 1800px; margin: 0 auto; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #eee; padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .app-title-group h1 { margin: 0; font-size: 22px; color: var(--primary); text-transform: uppercase; }
+        .clock-container { display: flex; align-items: center; gap: 10px; background: #34495e; color: #fff; padding: 5px 15px; border-radius: 50px; font-weight: bold; font-size: 16px; }
+        
+        /* Butonlar ve Araçlar */
+        .tools-bar { display: flex; gap: 8px; background: var(--tool-bg); padding: 8px; border-radius: 6px; margin-bottom: 15px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+        .tool-btn { border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 700; color: white; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+        .btn-unutma { background: var(--danger); } .btn-crm { background: var(--accent); } .btn-calc { background: var(--calc-color); } .btn-link { background: var(--link-color); }
+        
+        /* Form Alanı */
+        .input-panel { background: #fdfdfd; padding: 15px; border: 1px solid #ddd; border-left: 5px solid var(--primary); margin-bottom: 20px; border-radius: 4px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px; color: #555; text-transform: uppercase; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        .btn-save { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; height: 40px; }
+        .btn-delete-rec { background: var(--danger); color: white; border: none; padding: 0 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: none; margin-top: 10px; height: 40px; width: 100%; }
+        
+        /* Tablo */
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        th { background: #34495e; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+        .badge { padding: 2px 5px; border-radius: 3px; color: white; font-size: 10px; font-weight: bold; display: inline-block; }
+        .satilik { background: #27ae60; } .kiralik { background: #e67e22; } .sold { background: #d63031; }
+
+        /* Mobil Uyum */
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr 1fr; }
+            .tools-bar { padding-bottom: 10px; }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            tr { border: 1px solid #ccc; margin-bottom: 10px; border-radius: 5px; background: white; padding: 10px; }
+            td { border: none; border-bottom: 1px solid #eee; position: relative; padding-left: 50%; white-space: normal; text-align: right; }
+            td:before { position: absolute; top: 8px; left: 6px; width: 45%; padding-right: 10px; white-space: nowrap; text-align: left; font-weight: bold; content: attr(data-label); color: #2c3e50; }
+        }
+
+        /* Modallar */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; width: 90%; max-width: 500px; border-radius: 10px; max-height: 90vh; overflow-y: auto; }
+        .close-btn { float: right; font-size: 24px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="securityOverlay">
+        <div class="security-card">
+            <i class="fa-solid fa-shield-halved" style="font-size: 50px; color: #27ae60; margin-bottom: 15px;"></i>
+            <h3>CİHAZ DOĞRULAMA</h3>
+            <p style="font-size: 13px; color: #ddd;">Bu yazılım lisans korumalıdır.<br>Cihaz Kodunuzu yetkiliye iletiniz.</p>
+            
+            <div class="device-id-box" id="showDeviceID" onclick="copyID()" title="Kopyalamak için tıkla">...</div>
+            <div class="copy-hint" id="copyHint">Kopyalamak için koda dokunun</div>
+            
+            <input type="text" id="licenseKeyInput" class="sec-input" placeholder="Lisans Anahtarı">
+            <button class="sec-btn" onclick="verifyLicense()">GİRİŞ YAP</button>
+            <p id="secMsg" style="display:none; margin-top:15px; font-weight:bold;"></p>
+        </div>
+    </div>
+
+    <div id="appContainer">
+        <div class="container">
+            <header>
+                <div class="app-title-group">
+                    <h1>KARACABAY INVEST <span style="font-size:12px; background:#27ae60; color:white; padding:2px 6px; border-radius:4px;">v73</span></h1>
+                </div>
+                <div class="clock-container">
+                    <i class="fa-regular fa-clock"></i> <span id="clockDisplay">00:00</span>
+                </div>
+                <div>
+                    <button onclick="downloadBackup()" style="background:#f39c12; color:white; border:none; padding:8px; border-radius:4px; font-weight:bold;">YEDEKLE</button>
+                    <input type="file" id="fileUpload" style="display:none;" onchange="uploadBackup(this)">
+                    <button onclick="document.getElementById('fileUpload').click()" style="background:#3498db; color:white; border:none; padding:8px; border-radius:4px; font-weight:bold;">YÜKLE</button>
+                </div>
+            </header>
+
+            <div class="tools-bar">
+                <button class="tool-btn btn-crm" onclick="openModal('crmModal')"><i class="fa-solid fa-users"></i> CRM</button>
+                <button class="tool-btn btn-calc" onclick="openModal('calcModal')"><i class="fa-solid fa-calculator"></i> HESAP</button>
+                <button class="tool-btn btn-calc" onclick="openModal('currencyModal')"><i class="fa-solid fa-money-bill-transfer"></i> DÖVİZ</button>
+                <button class="tool-btn btn-link" onclick="window.open('https://parselsorgu.tkgm.gov.tr/')"><i class="fa-solid fa-map"></i> TKGM</button>
+                <button class="tool-btn btn-unutma" onclick="openModal('todoModal'); renderTodo();"><i class="fa-solid fa-bell"></i> NOTLAR</button>
+            </div>
+
+            <div class="input-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <strong style="color:var(--primary)">➕ Portföy Ekle / Düzenle</strong>
+                    <button onclick="resetForm()" style="background:#7f8c8d; color:white; border:none; padding:5px 10px; border-radius:4px;">Temizle</button>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Bölge</label><input type="text" id="inpArea" placeholder="Örn: Kepez, Göksu"></div>
+                    <div class="form-group"><label>Tip</label><select id="inpType"><option>Daire</option><option>Villa</option><option>Arsa</option><option>İşyeri</option></select></div>
+                    <div class="form-group"><label>Durum</label><select id="inpStatus"><option>Satılık</option><option>Kiralık</option><option>Satıldı</option></select></div>
+                    <div class="form-group"><label>Fiyat</label><input type="text" id="inpPrice" placeholder="0" oninput="formatPrice(this)"></div>
+                    <div class="form-group"><label>Oda</label><input type="text" id="inpRoom"></div>
+                    <div class="form-group"><label>Müşteri</label><input type="text" id="inpRef"></div>
+                    <div class="form-group"><label>Telefon</label><input type="text" id="inpPhone"></div>
+                    <div class="form-group" style="grid-column: 1 / -1;"><label>Açıklama / Link</label><textarea id="inpDesc" rows="2"></textarea></div>
+                </div>
+                <button id="btnSave" class="btn-save" onclick="savePort()">KAYDET</button>
+                <button id="btnDelete" class="btn-delete-rec" onclick="deletePort()">SİL</button>
+            </div>
+
+            <div class="filter-bar" style="background:var(--primary); padding:10px; border-radius:4px; margin-bottom:10px; color:white; display:flex; gap:10px; align-items:center;">
+                <span>🔍</span> <input type="text" id="searchBox" placeholder="Ara..." onkeyup="renderTable()" style="padding:5px; border-radius:4px; border:none; width:100%;">
+            </div>
+
+            <table id="pTable">
+                <thead><tr><th>Durum</th><th>Bölge/Tip</th><th>Fiyat</th><th>Müşteri</th><th>İşlem</th></tr></thead>
+                <tbody id="pList"></tbody>
+            </table>
+            <div style="text-align:center; color:#999; font-size:11px; margin-top:20px;">Karacabay Invest v73 System</div>
+        </div>
+    </div>
+
+    <div id="calcModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('calcModal')">&times;</span><h3>🧮 Komisyon Hesapla</h3><input type="text" id="cPrice" placeholder="Fiyat Girin" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd;" oninput="formatPrice(this)"><button onclick="doCalc()" class="btn-save">Hesapla</button><div id="cRes" style="margin-top:10px; font-weight:bold; background:#eee; padding:10px;"></div></div></div>
+    
+    <div id="currencyModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('currencyModal')">&times;</span><h3>💱 Döviz Hesapla</h3><p>Tutar Girin (TL):</p><input type="number" id="curAmount" style="width:100%; padding:10px;"><p>Kur Girin (USD/EUR):</p><input type="number" id="curRate" style="width:100%; padding:10px;"><button onclick="doCurCalc()" class="btn-save">Çevir</button><div id="curRes" style="margin-top:10px; font-weight:bold;"></div></div></div>
+
+    <div id="todoModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('todoModal')">&times;</span><h3>📝 Notlar</h3><div style="display:flex; gap:5px;"><input type="text" id="newTodo" placeholder="Not ekle..." style="flex:1;"><button onclick="addTodo()" style="background:var(--accent); color:white; border:none; padding:5px 10px;">+</button></div><ul id="todoList" style="margin-top:10px; padding-left:20px;"></ul></div></div>
+
+    <div id="crmModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('crmModal')">&times;</span><h3>👥 CRM (Müşteri Takip)</h3><textarea id="crmText" rows="10" style="width:100%; border:1px solid #ccc; padding:10px;" placeholder="Müşteri görüşmelerini buraya serbest metin olarak yazabilirsiniz..."></textarea><button onclick="saveCRM()" class="btn-save">Notları Kaydet</button></div></div>
+
+    <script>
+        // --- 1. GÜVENLİK SİSTEMİ (Device Lock) ---
+        const SALT = "Karacabay_Secure_v73_KEY"; // Bu şifreleme anahtarıdır.
+        let deviceID = localStorage.getItem('karacabay_device_id');
+        
+        if (!deviceID) {
+            // 6 Haneli Rastgele ID oluştur (Örn: A9B2X1)
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            deviceID = "";
+            for(let i=0; i<6; i++) deviceID += chars.charAt(Math.floor(Math.random() * chars.length));
+            localStorage.setItem('karacabay_device_id', deviceID);
+        }
+        document.getElementById('showDeviceID').innerText = deviceID;
+
+        function copyID() {
+            navigator.clipboard.writeText(deviceID).then(() => {
+                document.getElementById('copyHint').innerText = "KOPYALANDI! ✅";
+            });
+        }
+
+        async function verifyLicense() {
+            const input = document.getElementById('licenseKeyInput').value.trim().toUpperCase();
+            if(!input) return;
+            
+            // Doğru anahtarı hesapla
+            const correctKey = await generateHash(deviceID + SALT);
+            
+            if (input === correctKey) {
+                localStorage.setItem('karacabay_license_auth', input);
+                unlockApp();
+            } else {
+                const msg = document.getElementById('secMsg');
+                msg.style.display = 'block';
+                msg.style.color = '#e74c3c';
+                msg.innerText = "⛔ HATALI ANAHTAR!";
+            }
+        }
+
+        async function generateHash(text) {
+            const msgBuffer = new TextEncoder().encode(text);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            // İlk 8 karakteri al ve büyük harf yap
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 8).toUpperCase();
+        }
+
+        function unlockApp() {
+            document.getElementById('securityOverlay').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            initSystem(); // v73'ü başlat
+        }
+
+        // Açılışta Lisans Kontrolü
+        window.onload = async function() {
+            const savedLic = localStorage.getItem('karacabay_license_auth');
+            if(savedLic) {
+                const check = await generateHash(deviceID + SALT);
+                if(savedLic === check) {
+                    unlockApp();
+                }
+            }
+        };
+
+        // --- 2. UYGULAMA MANTIĞI (v73 CORE) ---
+        let db = [], todos = [], crmData = "";
+        let editId = null;
+
+        function initSystem() {
+            // Verileri Yükle
+            try { db = JSON.parse(localStorage.getItem('k_db') || '[]'); } catch(e){}
+            try { todos = JSON.parse(localStorage.getItem('k_todo') || '[]'); } catch(e){}
+            try { crmData = localStorage.getItem('k_crm') || ""; } catch(e){}
+            
+            document.getElementById('crmText').value = crmData;
+            renderTable();
+            setInterval(() => { document.getElementById('clockDisplay').innerText = new Date().toLocaleTimeString('tr-TR').substring(0,5); }, 1000);
+        }
+
+        function savePort() {
+            const item = {
+                id: editId ? editId : Date.now(),
+                area: document.getElementById('inpArea').value,
+                type: document.getElementById('inpType').value,
+                status: document.getElementById('inpStatus').value,
+                price: document.getElementById('inpPrice').value,
+                room: document.getElementById('inpRoom').value,
+                ref: document.getElementById('inpRef').value,
+                phone: document.getElementById('inpPhone').value,
+                desc: document.getElementById('inpDesc').value
+            };
+            
+            if(!item.area || !item.price) return alert("Bölge ve Fiyat zorunludur!");
+            
+            if(editId) {
+                const idx = db.findIndex(x => x.id === editId);
+                db[idx] = item;
+            } else {
+                db.push(item);
+            }
+            
+            saveDB();
+            resetForm();
+        }
+
+        function renderTable() {
+            const list = document.getElementById('pList');
+            const term = document.getElementById('searchBox').value.toLowerCase();
+            list.innerHTML = "";
+            
+            const filtered = db.filter(i => (i.area+i.type+i.ref).toLowerCase().includes(term));
+            
+            filtered.forEach(i => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td data-label="Durum"><span class="badge ${i.status==='Satılık'?'satilik':(i.status==='Kiralık'?'kiralik':'sold')}">${i.status}</span></td>
+                    <td data-label="Bölge/Tip"><b>${i.area}</b><br><small>${i.type} - ${i.room}</small></td>
+                    <td data-label="Fiyat" style="color:#27ae60; font-weight:bold;">${i.price} ₺</td>
+                    <td data-label="Müşteri">${i.ref}<br><small>${i.phone}</small></td>
+                    <td data-label="İşlem"><button onclick="loadEdit(${i.id})" style="background:#3498db; color:white; border:none; padding:5px 10px; border-radius:4px;">Düzenle</button></td>
+                `;
+                list.appendChild(tr);
+            });
+        }
+
+        function loadEdit(id) {
+            const i = db.find(x => x.id === id);
+            editId = id;
+            document.getElementById('inpArea').value = i.area;
+            document.getElementById('inpType').value = i.type;
+            document.getElementById('inpStatus').value = i.status;
+            document.getElementById('inpPrice').value = i.price;
+            document.getElementById('inpRoom').value = i.room;
+            document.getElementById('inpRef').value = i.ref;
+            document.getElementById('inpPhone').value = i.phone;
+            document.getElementById('inpDesc').value = i.desc;
+            
+            document.getElementById('btnSave').innerText = "GÜNCELLE";
+            document.getElementById('btnDelete').style.display = "block";
+            window.scrollTo(0,0);
+        }
+
+        function deletePort() {
+            if(confirm("Silinsin mi?")) {
+                db = db.filter(x => x.id !== editId);
+                saveDB();
+                resetForm();
+            }
+        }
+
+        function resetForm() {
+            editId = null;
+            document.querySelectorAll('.input-panel input, .input-panel textarea').forEach(e => e.value = "");
+            document.getElementById('btnSave').innerText = "KAYDET";
+            document.getElementById('btnDelete').style.display = "none";
+        }
+
+        function saveDB() {
+            localStorage.setItem('k_db', JSON.stringify(db));
+            renderTable();
+        }
+
+        // --- ARAÇLAR ---
+        function formatPrice(inp) {
+            let v = inp.value.replace(/\D/g, '');
+            inp.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        function doCalc() {
+            let p = parseFloat(document.getElementById('cPrice').value.replace(/\./g, ''));
+            if(!p) return;
+            let kom = p * 0.02;
+            let kdv = kom * 0.20;
+            let top = kom + kdv;
+            document.getElementById('cRes').innerHTML = `
+                Hizmet Bedeli (%2): ${kom.toLocaleString()} ₺<br>
+                KDV (%20): ${kdv.toLocaleString()} ₺<br>
+                TOPLAM: <span style="color:red">${top.toLocaleString()} ₺</span>
+            `;
+        }
+
+        function doCurCalc() {
+            let amt = parseFloat(document.getElementById('curAmount').value);
+            let rate = parseFloat(document.getElementById('curRate').value);
+            if(amt && rate) {
+                document.getElementById('curRes').innerText = "Sonuç: " + (amt/rate).toFixed(2); 
+            }
+        }
+
+        // TODO & CRM
+        function renderTodo() {
+            const ul = document.getElementById('todoList'); ul.innerHTML = "";
+            todos.forEach((t, idx) => {
+                ul.innerHTML += `<li>${t} <button onclick="delTodo(${idx})" style="color:red; border:none; background:none;">x</button></li>`;
+            });
+        }
+        function addTodo() {
+            const val = document.getElementById('newTodo').value;
+            if(val) { todos.push(val); localStorage.setItem('k_todo', JSON.stringify(todos)); document.getElementById('newTodo').value=""; renderTodo(); }
+        }
+        function delTodo(idx) {
+            todos.splice(idx, 1); localStorage.setItem('k_todo', JSON.stringify(todos)); renderTodo();
+        }
+        function saveCRM() {
+            localStorage.setItem('k_crm', document.getElementById('crmText').value);
+            alert("CRM Kaydedildi");
+            closeModal('crmModal');
+        }
+
+        // YEDEKLEME
+        function downloadBackup() {
+            const d = { db: db, todo: todos, crm: crmData };
+            const a = document.createElement('a');
+            a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(d));
+            a.download = "Karacabay_Yedek.json";
+            a.click();
+        }
+        function uploadBackup(inp) {
+            const f = inp.files[0];
+            const r = new FileReader();
+            r.onload = function(e) {
+                const d = JSON.parse(e.target.result);
+                if(d.db) {
+                    db = d.db; todos = d.todo || []; crmData = d.crm || "";
+                    saveDB(); localStorage.setItem('k_todo', JSON.stringify(todos)); localStorage.setItem('k_crm', crmData);
+                    alert("Yedek Yüklendi!");
+                    location.reload();
+                }
+            };
+            r.readAsText(f);
+        }
+
+        // Modal Kontrol
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    </script>
+</body>
+</html>
