@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>EMLAK PORTFÖY ASİSTANI - v74.1 PRO</title>
+    
+    <link rel="icon" href="https://ykaracabay-source.github.io/emlakasistani/logo.jpg" type="image/jpeg">
+    <link rel="apple-touch-icon" href="https://ykaracabay-source.github.io/emlakasistani/logo.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* --- GÜVENLİK KİLİDİ STİLLERİ --- */
@@ -36,6 +39,7 @@
         header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #eee; padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .app-title-group h1 { margin: 0; line-height: 1; font-size: 24px; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
         .app-subtitle { font-size: 12px; font-weight: 600; color: #7f8c8d; letter-spacing: 2px; margin-top: 5px; }
+        .header-logo { height: 45px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); object-fit: contain; }
 
         /* MODERN SAAT */
         .clock-container {
@@ -211,9 +215,12 @@
 <div id="appContainer">
     <div class="container">
         <header>
-            <div class="app-title-group">
-                <h1>🏢 EMLAK PORTFÖY ASİSTANI <span style="font-size:12px; color:#fff; background-color:#8e44ad; padding:2px 8px; border-radius:10px; vertical-align:middle;">v74.1 PRO</span></h1>
-                <div class="app-subtitle">Profesyonel Emlak Yönetim Sistemi</div>
+            <div class="app-title-group" style="display: flex; align-items: center; gap: 15px;">
+                <img src="https://ykaracabay-source.github.io/emlakasistani/logo.jpg" alt="Karacabay Logo" class="header-logo">
+                <div>
+                    <h1>EMLAK PORTFÖY ASİSTANI <span style="font-size:12px; color:#fff; background-color:#8e44ad; padding:2px 8px; border-radius:10px; vertical-align:middle;">v74.1 PRO</span></h1>
+                    <div class="app-subtitle">Profesyonel Emlak Yönetim Sistemi</div>
+                </div>
             </div>
             
             <div class="clock-container" id="digitalClockBox">
@@ -721,7 +728,6 @@
         Object.keys(turkiyeData).sort().forEach(city => { if(city !== "Antalya") { iC.innerHTML += `<option value="${city}">${city}</option>`; fC.innerHTML += `<option value="${city}">${city}</option>`; } });
         handleCityChange('inpCity', 'inpDistrict', 'dl_mahalle_ekle'); fC.value = "Antalya"; handleCityChange('filterCity', 'filterDistrict', 'dl_mahalle_filtre');
         const tS=document.getElementById('inpType'), fT=document.getElementById('filterType'); typeList.forEach(t=>{tS.innerHTML+=`<option>${t}</option>`;fT.innerHTML+=`<option>${t}</option>`;});
-        // KAT SEÇENEĞİ GÜNCELLEMESİ: Varsayılan "SEÇİNİZ" eklendi
         const fL = document.getElementById('inpFloor'); fL.innerHTML = '<option value="">SEÇİNİZ</option>'; floorList.forEach(f => { const opt = document.createElement('option'); opt.value = f; opt.innerText = f; fL.appendChild(opt); });
     }
 
@@ -770,7 +776,6 @@
             let badgeClass = item.status.includes('Satıldı')||item.status.includes('Kiralandı') ? 'kirmizi-etiket' : (item.status==='Kiralık'?'kiralik':'satilik'); 
             let rowClass = item.status === 'Satıldı' ? 'row-sold' : (item.status === 'Kiralandı' ? 'row-rented' : ''); 
             
-            // KAT GİZLEME MANTIĞI: Eğer "SEÇİNİZ" ise veya boşsa tabloda gösterme
             let floorInfo = "";
             if (item.floor && item.floor !== "SEÇİNİZ") {
                 floorInfo = `<br><small>${item.floor}</small>`;
@@ -797,19 +802,16 @@
     function openCRM() { openModal('crmModal'); renderInvestors(); renderNetwork(); document.getElementById('netLastCall').valueAsDate = new Date(); }
     function switchCRMTab(tab) { document.querySelectorAll('.crm-section').forEach(s => s.style.display = 'none'); document.querySelectorAll('.crm-tab').forEach(t => t.classList.remove('active')); if(tab === 'investors') { document.getElementById('crmInvestors').style.display = 'block'; document.getElementById('tab1').classList.add('active'); } else { document.getElementById('crmNetwork').style.display = 'block'; document.getElementById('tab2').classList.add('active'); } resetCRMForm('investors'); resetCRMForm('network'); }
     
-    // CRM SAVE - DURUM ALANI KALDIRILDI
     function saveCRMInvestor() { const inv = { id: crmEditingId ? crmEditingId : Date.now(), name: document.getElementById('invName').value, phone: document.getElementById('invPhone').value, type: document.getElementById('invType').value, region: document.getElementById('invRegion').value, budget: document.getElementById('invBudget').value, note: document.getElementById('invNote').value }; if(!inv.name) return; if(crmEditingId) crmData.investors[crmData.investors.findIndex(i => i.id === crmEditingId)] = inv; else crmData.investors.push(inv); saveCRM(); renderInvestors(); resetCRMForm('investors'); }
     function saveCRMNetwork() { const net = { id: crmEditingId ? crmEditingId : Date.now(), name: document.getElementById('netName').value, phone: document.getElementById('netPhone').value, job: document.getElementById('netJob').value, city: document.getElementById('netCity').value, relation: document.getElementById('netRelation').value, lastCall: document.getElementById('netLastCall').value || new Date().toISOString().split('T')[0], note: document.getElementById('netNote').value }; if(!net.name) return; if(crmEditingId) crmData.network[crmData.network.findIndex(n => n.id === crmEditingId)] = net; else crmData.network.push(net); saveCRM(); renderNetwork(); resetCRMForm('network'); }
     function deleteCRMInvestor() { if(confirm('Sil?')) { crmData.investors = crmData.investors.filter(i => i.id !== crmEditingId); saveCRM(); renderInvestors(); resetCRMForm('investors'); } }
     function deleteCRMNetwork() { if(confirm('Sil?')) { crmData.network = crmData.network.filter(n => n.id !== crmEditingId); saveCRM(); renderNetwork(); resetCRMForm('network'); } }
     function resetCRMForm(type) { crmEditingId = null; if(type === 'investors') { document.querySelectorAll('#crmInvestors input, #crmInvestors textarea').forEach(i=>i.value=''); document.getElementById('btnInvSave').innerText = "KAYDET"; document.getElementById('btnInvDelete').style.display = "none"; } else { document.querySelectorAll('#crmNetwork input, #crmNetwork textarea').forEach(i=>i.value=''); document.getElementById('netCity').value = 'Antalya'; document.getElementById('netLastCall').valueAsDate = new Date(); document.getElementById('btnNetSave').innerText = "KAYDET"; document.getElementById('btnNetDelete').style.display = "none"; } }
 
-    // CRM RENDER - DURUM SÜTUNU KALDIRILDI
     function renderInvestors() { const tbody = document.getElementById('investorTableBody'); tbody.innerHTML = ''; crmData.investors.forEach(inv => { tbody.innerHTML += `<tr><td><b>${inv.name}</b></td><td>${inv.phone}</td><td>${inv.type} - ${inv.region}</td><td>${inv.budget} TL</td><td><small>${inv.note || '-'}</small></td><td><button onclick="editCRMInvestor(${inv.id})">DÜZENLE</button></td></tr>`; }); }
     function renderNetwork() { const tbody = document.getElementById('networkTableBody'); tbody.innerHTML = ''; const today = new Date(); crmData.network.forEach(net => { let lastCallDate = new Date(net.lastCall || today); let diffTime = Math.abs(today - lastCallDate); let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); let statusBadge = ''; if(diffDays >= 45) { statusBadge = `<span class="badge-crm-danger">📞 ARA</span>`; } else { statusBadge = `<span class="badge-crm-safe">${diffDays} Gün Oldu</span>`; } tbody.innerHTML += ` <tr> <td><b>${net.name}</b></td> <td>${net.job}<br><small>${net.city}</small></td> <td>${net.phone}</td> <td>${net.relation}</td> <td>${net.lastCall}</td> <td style="text-align:center;">${statusBadge}</td> <td><small>${net.note || '-'}</small></td> <td style="display:flex; gap:5px; justify-content:center;"> <button onclick="resetNetworkTimer(${net.id})" style="background:#3498db; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px;">📞 GÖRÜŞTÜM</button> <button onclick="editCRMNetwork(${net.id})" style="background:#f39c12; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px;">DÜZENLE</button> </td> </tr>`; }); }
     function resetNetworkTimer(id) { if(confirm("Görüşme yapıldı olarak işaretlensin mi? Tarih bugün olacak.")) { const idx = crmData.network.findIndex(n => n.id === id); if(idx > -1) { crmData.network[idx].lastCall = new Date().toISOString().split('T')[0]; saveCRM(); renderNetwork(); } } }
     
-    // CRM EDIT - DURUM ALANI KALDIRILDI
     function editCRMInvestor(id) { const i = crmData.investors.find(x => x.id === id); if(!i) return; crmEditingId = id; document.getElementById('invName').value = i.name; document.getElementById('invPhone').value = i.phone; document.getElementById('invType').value = i.type; document.getElementById('invRegion').value = i.region; document.getElementById('invBudget').value = i.budget; document.getElementById('invNote').value = i.note; document.getElementById('btnInvSave').innerText = "GÜNCELLE"; document.getElementById('btnInvDelete').style.display = "inline-block"; }
     function editCRMNetwork(id) { const n = crmData.network.find(x => x.id === id); if(!n) return; crmEditingId = id; document.getElementById('netName').value = n.name; document.getElementById('netPhone').value = n.phone; document.getElementById('netJob').value = n.job; document.getElementById('netCity').value = n.city; document.getElementById('netRelation').value = n.relation; document.getElementById('netNote').value = n.note; document.getElementById('netLastCall').value = n.lastCall; document.getElementById('btnNetSave').innerText = "GÜNCELLE"; document.getElementById('btnNetDelete').style.display = "inline-block"; }
     function saveCRM() { localStorage.setItem('KaracabayRE_CRM_v19', JSON.stringify(crmData)); }
@@ -873,7 +875,6 @@
         return isNaN(val) ? 0 : val;
     }
     
-    // GÜNCELLENMİŞ FORMAT CURRENCY (DÖVİZ DESTEKLİ)
     function formatCurrency(input) { 
         let v = input.value.replace(/\D/g, ''); 
         if(v) {
@@ -884,12 +885,10 @@
                 let kdvRate = globalVAT / 100;
                 let commKdv = comm * (1 + kdvRate);
                 
-                // Seçilen Döviz Cinsini Al
                 const currSymbol = document.getElementById('inpCurrency').value;
                 
                 let commBox = document.getElementById('instantComm');
                 commBox.style.display = 'block';
-                // Değerleri seçilen para biriminde göster
                 commBox.innerHTML = `Hizmet Bedeli (%2): ${comm.toLocaleString('tr-TR')} ${currSymbol} <span style="color:#7f8c8d; font-weight:normal;">(+KDV %${globalVAT}: ${commKdv.toLocaleString('tr-TR')} ${currSymbol})</span>`;
             }
         } else { 
