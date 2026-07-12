@@ -127,6 +127,7 @@
             #print-area, #print-area * { visibility: visible !important; }
             
             /* Print alanını kağıdın tam sol üstüne sıfırla (Ana projenin marginlerinden kurtar) */
+            /* Absolute pozisyon sayesinde arka plandaki görünmez CRM sistemi sayfa boyunu uzatamaz! */
             #print-area { 
                 display: block !important; 
                 position: absolute !important; 
@@ -373,7 +374,7 @@
                         </div>
                         <div class="eh-col">
                             <div class="eh-form-group small">
-                                <label>Açık Adres Bilgisi</label>
+                                <label>Mülk Adres Bilgisi</label>
                                 <input type="text" id="ir_adres">
                             </div>
                         </div>
@@ -622,7 +623,6 @@
     function printCustomPDF(filename) {
         let originalTitle = document.title;
         document.title = filename; 
-        window.focus(); // Iframe içinde yazdırırken odağı alır
         window.print();
         setTimeout(() => { document.title = originalTitle; }, 1000);
     }
@@ -1136,7 +1136,7 @@
             let aNet = araciBrut, aStopaj = 0;
             if(araciTipi === 'gider_pusulasi') { aStopaj = araciBrut*(araciStopajOran/100); aNet = araciBrut - aStopaj; }
             let aciklama = araciTipi === 'gider_pusulasi' ? `(-) Dış Aracı Ödemesi (Net: ${ehFormatter.format(aNet)} + Stopaj: ${ehFormatter.format(aStopaj)}):` : `(-) Dış Aracı Fatura Ödemesi (Matrah):`;
-            araciCikisSatiriHTML = `<tr><td style="padding:6px; border:1px solid #ddd; width:35%;"></td><td style="padding:6px; border:1px solid #ddd; width:15%;"></td><td style="padding:6px; border:1px solid #ddd; width:35%; line-height:1.4;">${aciklama}</td><td style="padding:6px; border:1px solid #ddd; color:#c0392b; text-align:right; white-space:nowrap; width:15%;"><strong>- ${ehFormatter.format(araciBrut)}</strong></td></tr>`;
+            araciCikisSatiriHTML = `<tr><td style="padding:8px; border:1px solid #ddd; width:35%;"></td><td style="padding:8px; border:1px solid #ddd; width:15%;"></td><td style="padding:8px; border:1px solid #ddd; width:35%; line-height:1.4;">${aciklama}</td><td style="padding:8px; border:1px solid #ddd; color:#c0392b; text-align:right; white-space:nowrap; width:15%;"><strong>- ${ehFormatter.format(araciBrut)}</strong></td></tr>`;
         }
 
         const area = document.getElementById('print-area');
