@@ -116,36 +116,11 @@
         #eh-toast { visibility: hidden; min-width: 250px; background-color: var(--green); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; font-weight: bold; font-size: 15px; transform: translateX(-50%); box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
         #eh-toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 
-        #print-area { display: none; }
-        
-        /* GÜÇLENDİRİLMİŞ İZOLE BASKI (ISOLATED PRINT) AYARLARI */
+        /* Eski çakışan yazıcı ayarları silindi, sadece bilgilendirme metni bırakıldı. Baskı işlemi IFRAME ile yapılıyor. */
         @media print {
-            /* Ana projedeki (index.html) diğer tüm kalabalığı görünmez yap */
-            body * { visibility: hidden !important; }
-            
-            /* Sadece bizim print-area divimizi ve içindekileri görünür yap */
-            #print-area, #print-area * { visibility: visible !important; }
-            
-            /* Print alanını kağıdın tam sol üstüne sıfırla (Ana projenin marginlerinden kurtar) */
-            /* Absolute pozisyon sayesinde arka plandaki görünmez CRM sistemi sayfa boyunu uzatamaz! */
-            #print-area { 
-                display: block !important; 
-                position: absolute !important; 
-                left: 0 !important; 
-                top: 0 !important; 
-                width: 100% !important; 
-                margin: 0 !important; 
-                padding: 0 !important;
-            }
-            
-            /* Standart A4 kağıt ölçüsü ve margin ayarı */
-            @page { size: A4 portrait; margin: 10mm; }
-            
-            /* Renklerin ve arka planların tam basılması için zorunlu ayar */
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            
-            /* Sayfa bölünmesini önleme kilidi */
-            .print-avoid-break { page-break-inside: avoid; }
+            body { margin: 0; padding: 0; background: #fff; }
+            .eh-container, #eh-toast { display: none !important; }
+            body::before { content: "Lütfen yazdırmak için ilgili raporun altındaki MAVİ veya LACİVERT PDF butonlarını kullanınız."; font-size: 16px; font-weight: bold; padding:20px; display:block; text-align:center;}
         }
     </style>
 </head>
@@ -399,13 +374,6 @@
                         <div class="eh-col"><div class="eh-form-group small"><label>Cep Telefonu</label><input type="text" id="ir_a_cep" oninput="ehFormatPhone(this)" placeholder="0 5XX XXX XX XX"></div></div>
                         <div class="eh-col"><div class="eh-form-group small"><label>İş Telefonu</label><input type="text" id="ir_a_is" oninput="ehFormatPhone(this)" placeholder="0 XXX XXX XX XX"></div></div>
                     </div>
-
-                    <!-- Fatura Numaraları Modülü -->
-                    <div class="eh-section-title">Fatura Bilgileri (İsteğe Bağlı)</div>
-                    <div class="eh-row">
-                        <div class="eh-col"><div class="eh-form-group small"><label>Danışman (GMD) Fatura No</label><input type="text" id="ir_danisman_fatura" placeholder="Örn: GMD2026000001"></div></div>
-                        <div class="eh-col"><div class="eh-form-group small"><label>Ofis / Firma Fatura No</label><input type="text" id="ir_ofis_fatura" placeholder="Örn: OFS2026000001"></div></div>
-                    </div>
                 </div>
             </div>
 
@@ -500,17 +468,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="eh-row" style="margin-top:10px;">
-                    <div class="eh-col">
-                        <div class="eh-form-group small">
-                            <label>Aracı Kesintisi Kimden Yapılacak?</label>
-                            <select id="eh_h_araci_kesinti_tipi" onchange="ehCalcHakedis()">
-                                <option value="ortak">Ortak Havuzdan Düş (Maliyet Paylaşılır)</option>
-                                <option value="danisman">Sadece Danışman Payından Düş (Firma Tam Alır)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
                 <!-- Aracı Bilgileri -->
                 <div id="ir_araci_bilgi_div" style="display:none; border-top:1px dashed #fbd38d; padding-top:15px; margin-top:5px;">
                     <div class="eh-row">
@@ -591,7 +548,7 @@
 
     </div>
 
-    <!-- Print (Yazıcı) Çıktı Alanı ve Toast Bildirim Kutusu -->
+    <!-- Eski Print Area DIV'i silinmedi, ancak artık iframe ile yazdırıldığı için içi boş kalacak. -->
     <div id="print-area"></div>
     <div id="eh-toast"></div>
 
@@ -620,11 +577,47 @@
         setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
     }
     
-    function printCustomPDF(filename) {
+    /* YENİ GİZLİ İFRAME YAZDIRMA MOTORU (SANAL BASKI ODASI) - 3 SAYFA ÇIKMA SORUNUNA KESİN ÇÖZÜM */
+    function printCustomPDF(filename, htmlContent) {
         let originalTitle = document.title;
         document.title = filename; 
-        window.print();
-        setTimeout(() => { document.title = originalTitle; }, 1000);
+        
+        let iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0px';
+        iframe.style.height = '0px';
+        iframe.style.border = 'none';
+        iframe.style.visibility = 'hidden';
+        document.body.appendChild(iframe);
+
+        let doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(`
+            <html>
+            <head>
+                <title>${filename}</title>
+                <style>
+                    @page { size: A4 portrait; margin: 10mm; }
+                    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: #000; background: #fff; margin:0; padding:0; }
+                    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                    .nowrap { white-space: nowrap !important; }
+                </style>
+            </head>
+            <body>
+                ${htmlContent}
+            </body>
+            </html>
+        `);
+        doc.close();
+
+        iframe.contentWindow.focus();
+        setTimeout(function() {
+            iframe.contentWindow.print();
+            document.title = originalTitle;
+            setTimeout(function() {
+                document.body.removeChild(iframe);
+            }, 1000);
+        }, 300);
     }
 
     function ehOpenTab(evt, tabId) { 
@@ -682,8 +675,6 @@
             ir_a_tc: document.getElementById('ir_a_tc').value,
             ir_a_cep: document.getElementById('ir_a_cep').value,
             ir_a_is: document.getElementById('ir_a_is').value,
-            ir_danisman_fatura: document.getElementById('ir_danisman_fatura') ? document.getElementById('ir_danisman_fatura').value : '',
-            ir_ofis_fatura: document.getElementById('ir_ofis_fatura') ? document.getElementById('ir_ofis_fatura').value : '',
             eh_h_mulk_bedel: document.getElementById('eh_h_mulk_bedel').value,
             eh_h_satici_bedel: document.getElementById('eh_h_satici_bedel').value,
             eh_h_alici_bedel: document.getElementById('eh_h_alici_bedel').value,
@@ -693,7 +684,6 @@
             eh_h_araci_payi: document.getElementById('eh_h_araci_payi').value,
             eh_h_araci_tipi: document.getElementById('eh_h_araci_tipi').value,
             eh_h_araci_stopaj: document.getElementById('eh_h_araci_stopaj').value,
-            eh_h_araci_kesinti_tipi: document.getElementById('eh_h_araci_kesinti_tipi') ? document.getElementById('eh_h_araci_kesinti_tipi').value : 'ortak',
             ir_araci_ad: document.getElementById('ir_araci_ad').value,
             ir_araci_tc: document.getElementById('ir_araci_tc').value,
             ir_araci_tel: document.getElementById('ir_araci_tel').value,
@@ -1021,7 +1011,6 @@
         let araciBrut = ehGetNum('eh_h_araci_payi');
         let araciTipi = document.getElementById('eh_h_araci_tipi').value;
         let araciStopajOran = parseFloat(document.getElementById('eh_h_araci_stopaj').value) || 10;
-        let araciKesintiTipi = document.getElementById('eh_h_araci_kesinti_tipi') ? document.getElementById('eh_h_araci_kesinti_tipi').value : 'ortak';
         
         let araciStopajTutar = 0;
         let araciNet = araciBrut;
@@ -1032,26 +1021,16 @@
             araciNet = araciBrut - araciStopajTutar;
         }
         
-        let danismanBrut = 0;
-        let ofisBrut = 0;
+        let netHavuz = bedel - araciBrut;
+        if(netHavuz < 0) netHavuz = 0;
 
-        if (araciKesintiTipi === 'ortak') {
-            let netHavuz = bedel - araciBrut;
-            if(netHavuz < 0) netHavuz = 0;
-            danismanBrut = netHavuz * (danismanOran / 100); 
-            ofisBrut = netHavuz * (ofisOran / 100); 
-        } else {
-            let anaDanismanPayi = bedel * (danismanOran / 100);
-            ofisBrut = bedel * (ofisOran / 100);
-            danismanBrut = anaDanismanPayi - araciBrut;
-            if(danismanBrut < 0) danismanBrut = 0;
-        }
-
+        let danismanBrut = netHavuz * (danismanOran / 100); 
         let faturaKdv = danismanBrut * (kdvOran / 100); 
         let faturaToplam = danismanBrut + faturaKdv; 
         let gelirVergisiDanisman = danismanBrut * (vergiOranDanisman / 100); 
         let netKazancDanisman = danismanBrut - gelirVergisiDanisman; 
 
+        let ofisBrut = netHavuz * (ofisOran / 100); 
         let devleteOdenecekKdvFirma = tahsilatKdv - faturaKdv; 
         let gelirVergisiFirma = ofisBrut * (vergiOranFirma / 100); 
         let netKazancFirma = ofisBrut - gelirVergisiFirma; 
@@ -1103,24 +1082,7 @@
         let dPay = document.getElementById('eh_h_danisman_pay').value || "80";
         let fPay = 100 - parseFloat(dPay);
         let araciBrut = ehGetNum('eh_h_araci_payi');
-        let araciKesintiTipi = document.getElementById('eh_h_araci_kesinti_tipi') ? document.getElementById('eh_h_araci_kesinti_tipi').value : 'ortak';
-        
-        let dBrutPay = 0, fBrutPay = 0;
-        if (araciKesintiTipi === 'ortak') {
-            let netHavuz = bedel - araciBrut;
-            if(netHavuz < 0) netHavuz = 0;
-            dBrutPay = netHavuz * (parseFloat(dPay) / 100);
-            fBrutPay = netHavuz * (fPay / 100);
-        } else {
-            let anaDanismanPayi = bedel * (parseFloat(dPay) / 100);
-            fBrutPay = bedel * (fPay / 100);
-            dBrutPay = anaDanismanPayi - araciBrut;
-            if(dBrutPay < 0) dBrutPay = 0;
-        }
-
-        let hPaylasimTxt = araciBrut > 0 
-            ? (araciKesintiTipi === 'ortak' ? `Net Havuz Üzerinden (%${dPay} D. / %${fPay} O.)` : `Danışman Payından Kesinti (%${dPay} D. / %${fPay} O.)`) 
-            : `(%${dPay} Danışman / %${fPay} Ofis)`;
+        let hPaylasimTxt = araciBrut > 0 ? `Net Havuz Üzerinden (%${dPay} D. / %${fPay} O.)` : `(%${dPay} D. / %${fPay} O.)`;
 
         let dVergi = document.getElementById('eh_h_vergi_select').value;
         let fVergi = dVergi;
@@ -1136,106 +1098,105 @@
             let aNet = araciBrut, aStopaj = 0;
             if(araciTipi === 'gider_pusulasi') { aStopaj = araciBrut*(araciStopajOran/100); aNet = araciBrut - aStopaj; }
             let aciklama = araciTipi === 'gider_pusulasi' ? `(-) Dış Aracı Ödemesi (Net: ${ehFormatter.format(aNet)} + Stopaj: ${ehFormatter.format(aStopaj)}):` : `(-) Dış Aracı Fatura Ödemesi (Matrah):`;
-            araciCikisSatiriHTML = `<tr><td style="padding:8px; border:1px solid #ddd; width:35%;"></td><td style="padding:8px; border:1px solid #ddd; width:15%;"></td><td style="padding:8px; border:1px solid #ddd; width:35%; line-height:1.4;">${aciklama}</td><td style="padding:8px; border:1px solid #ddd; color:#c0392b; text-align:right; white-space:nowrap; width:15%;"><strong>- ${ehFormatter.format(araciBrut)}</strong></td></tr>`;
+            araciCikisSatiriHTML = `<tr><td style="padding:8px; border:1px solid #ddd; width:35%;"></td><td style="padding:8px; border:1px solid #ddd; width:15%;"></td><td style="padding:8px; border:1px solid #ddd; width:35%; line-height:1.4;">${aciklama}</td><td class="nowrap" style="padding:8px; border:1px solid #ddd; color:#c0392b; text-align:right; width:15%;"><strong>- ${ehFormatter.format(araciBrut)}</strong></td></tr>`;
         }
 
-        const area = document.getElementById('print-area');
-        area.innerHTML = `
-            <div style="padding:30px; font-family:'Segoe UI', Arial, sans-serif; color: #2c3e50;">
-                <div style="text-align:left; border-bottom:3px solid #2c3e50; padding-bottom:10px; margin-bottom:15px;">
+        let htmlString = `
+            <div style="padding:40px; color: #2c3e50;">
+                <div style="text-align:left; border-bottom:3px solid #2c3e50; padding-bottom:15px; margin-bottom:20px;">
                     <h2 style="margin:0 0 5px 0; font-size:20px; color:#2c3e50; text-transform:uppercase;">${fAd}</h2>
                     <h1 style="margin:0; font-size:22px; color:#2c3e50;">HAKEDİŞ VE MUTABAKAT RAPORU</h1>
                 </div>
                 
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:12px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:13px;">
                     <div><strong>Tarih:</strong> ${islemTarih}</div>
                     <div><strong>İşlem Referansı:</strong> ....................................................</div>
                 </div>
 
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin-bottom:15px; font-size:12px;">
-                    <h3 style="margin:0 0 8px 0; color:#3498db; border-bottom:1px solid #cbd5e0; padding-bottom:4px;">1. İŞLEM ÖZETİ VE PAYLAŞIM ORANLARI</h3>
-                    <div style="display:flex; justify-content:space-between; margin-top:8px;">
-                        <div style="width:55%;">
-                            <div style="margin-bottom:4px;">Tahsil Edilen Toplam Hizmet Bedeli (KDV Hariç): <strong style="white-space:nowrap;">${ehFormatter.format(bedel)}</strong></div>
-                            <div style="margin-bottom:4px;">İşlem KDV Oranı: <strong style="white-space:nowrap;">%${kdvOranTxt}</strong></div>
-                            <div>Müşteriden Alınan Toplam Tutar: <strong style="white-space:nowrap;">${document.getElementById('eh_h_r_firma_tahsilat').innerText}</strong></div>
-                            ${araciBrut > 0 ? `<div style="margin-top:4px; color:#c0392b;">Dış Aracıya Verilen Pay: <strong style="white-space:nowrap;">${ehFormatter.format(araciBrut)}</strong></div>` : ''}
+                <div style="background:#fff; border:1px solid #cbd5e0; padding:15px; border-radius:8px; margin-bottom:20px; font-size:13px;">
+                    <h3 style="margin:0 0 10px 0; color:#3498db; border-bottom:1px solid #cbd5e0; padding-bottom:5px;">1. İŞLEM ÖZETİ VE PAYLAŞIM ORANLARI</h3>
+                    <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                        <div style="width:50%;">
+                            <div style="margin-bottom:5px;">Tahsil Edilen Toplam Hizmet Bedeli (KDV Hariç): <strong class="nowrap">${ehFormatter.format(bedel)}</strong></div>
+                            <div style="margin-bottom:5px;">İşlem KDV Oranı: <strong class="nowrap">%${kdvOranTxt}</strong></div>
+                            <div>Müşteriden Alınan Toplam Tutar: <strong class="nowrap">${document.getElementById('eh_h_r_firma_tahsilat').innerText}</strong></div>
+                            ${araciBrut > 0 ? `<div style="margin-top:5px; color:#c0392b;">Dış Aracıya Verilen Pay: <strong class="nowrap">${ehFormatter.format(araciBrut)}</strong></div>` : ''}
                         </div>
-                        <div style="width:45%; text-align:right;">
-                            <div style="margin-bottom:4px;">Paylaşım Oranı: <strong style="white-space:nowrap;">${hPaylasimTxt}</strong></div>
-                            <div style="margin-bottom:4px;">Danışman Brüt Hizmet Bedeli Payı: <strong style="white-space:nowrap;">${ehFormatter.format(dBrutPay)}</strong></div>
-                            <div style="margin-bottom:4px;">Firma / Broker Brüt Hizmet Bedeli Payı: <strong style="white-space:nowrap;">${ehFormatter.format(fBrutPay)}</strong></div>
-                            <div>Uygulanan Vergi Oranı: <strong style="white-space:nowrap;">Danışman %${dVergi} | Firma %${fVergi}</strong></div>
+                        <div style="width:50%; text-align:right;">
+                            <div style="margin-bottom:5px; white-space:nowrap;">Paylaşım Oranı: <strong>${hPaylasimTxt}</strong></div>
+                            <div style="margin-bottom:5px;">Danışman Brüt Payı: <strong class="nowrap">${document.getElementById('eh_h_r_matrah').innerText}</strong></div>
+                            <div style="margin-bottom:5px;">Firma Brüt Payı: <strong class="nowrap">${ehFormatter.format(netHavuz - (netHavuz * (parseFloat(dPay) / 100)))}</strong></div>
+                            <div>Vergi Oranı: <strong>Danışman %${dVergi} | Firma %${fVergi}</strong></div>
                         </div>
                     </div>
                 </div>
 
-                <div style="margin-bottom:15px;">
-                    <h3 style="margin:0 0 8px 0; color:#3498db; border-bottom:2px solid #2c3e50; padding-bottom:4px; font-size:13px;">2. DANIŞMAN CARİSİ VE FATURA BİLGİLERİ</h3>
-                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <div style="margin-bottom:20px;">
+                    <h3 style="margin:0 0 10px 0; color:#3498db; border-bottom:2px solid #2c3e50; padding-bottom:5px; font-size:14px;">2. DANIŞMAN CARİSİ VE FATURA BİLGİLERİ</h3>
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
                         <thead>
                             <tr style="background:#f1f5f9; color:#2c3e50; text-align:left;">
-                                <th style="padding:6px; border:1px solid #ddd; width:50%;" colspan="2">GELİRLER (Firmaya Kesilecek Fatura)</th>
-                                <th style="padding:6px; border:1px solid #ddd; width:50%;" colspan="2">GİDER VE KESİNTİLER</th>
+                                <th style="padding:8px; border:1px solid #ddd; width:50%;" colspan="2">GELİRLER (Firmaya Kesilecek Fatura)</th>
+                                <th style="padding:8px; border:1px solid #ddd; width:50%;" colspan="2">GİDER VE KESİNTİLER</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;">(+) Matrah (KDV Hariç):</td><td style="padding:6px; border:1px solid #ddd; text-align:right; white-space:nowrap; width:15%;"><strong>${document.getElementById('eh_h_r_matrah').innerText}</strong></td>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;">(-) KDV Tutarı Ödemesi:</td><td style="padding:6px; border:1px solid #ddd; color:#c0392b; text-align:right; white-space:nowrap; width:15%;"><strong>- ${document.getElementById('eh_h_r_devlet_kdv').innerText}</strong></td>
+                            <tr style="background:#fff;">
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;">(+) Matrah (KDV Hariç):</td><td class="nowrap" style="padding:8px; border:1px solid #ddd; text-align:right; width:15%;"><strong>${document.getElementById('eh_h_r_matrah').innerText}</strong></td>
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;">(-) KDV Tutarı Ödemesi:</td><td class="nowrap" style="padding:8px; border:1px solid #ddd; color:#c0392b; text-align:right; width:15%;"><strong>- ${document.getElementById('eh_h_r_devlet_kdv').innerText}</strong></td>
                             </tr>
-                            <tr>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;">(+) KDV Tutarı:</td><td style="padding:6px; border:1px solid #ddd; text-align:right; white-space:nowrap; width:15%;"><strong>${document.getElementById('eh_h_r_kdv_ekle').innerText}</strong></td>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;">(-) Gelir Vergisi Yükü:</td><td style="padding:6px; border:1px solid #ddd; color:#c0392b; text-align:right; white-space:nowrap; width:15%;"><strong>- ${document.getElementById('eh_h_r_gv').innerText}</strong></td>
+                            <tr style="background:#fff;">
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;">(+) KDV Tutarı:</td><td class="nowrap" style="padding:8px; border:1px solid #ddd; text-align:right; width:15%;"><strong>${document.getElementById('eh_h_r_kdv_ekle').innerText}</strong></td>
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;">(-) Gelir Vergisi Yükü:</td><td class="nowrap" style="padding:8px; border:1px solid #ddd; color:#c0392b; text-align:right; width:15%;"><strong>- ${document.getElementById('eh_h_r_gv').innerText}</strong></td>
                             </tr>
-                            <tr style="background:#f8fafc; font-weight:bold;">
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;">(=) FATURA TOPLAMI:</td><td style="padding:6px; border:1px solid #ddd; color:#3498db; text-align:right; font-size:13px; white-space:nowrap; width:15%;">${document.getElementById('eh_h_r_fatura_toplam').innerText}</td>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;"></td><td style="padding:6px; border:1px solid #ddd; width:15%;"></td>
+                            <tr style="background:#fff; border-top: 2px solid #2c3e50; font-weight:bold;">
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;">(=) FATURA TOPLAMI:</td><td class="nowrap" style="padding:8px; border:1px solid #ddd; color:#3498db; text-align:right; font-size:14px; width:15%;">${document.getElementById('eh_h_r_fatura_toplam').innerText}</td>
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;"></td><td style="padding:8px; border:1px solid #ddd; width:15%;"></td>
                             </tr>
                         </tbody>
                     </table>
-                    <div style="background:#f0fff4; border:1px solid #9ae6b4; padding:8px; margin-top:8px; border-radius:6px; text-align:center;">
-                        <span style="font-size:12px; color:#276749; font-weight:bold;">DANIŞMAN NET KAZANCI:</span>
-                        <span style="font-size:16px; font-weight:900; color:#2f855a; margin-left:10px;">${document.getElementById('eh_h_r_net').innerText}</span>
+                    <div style="background:#f0fff4; border:1px solid #9ae6b4; padding:10px; margin-top:10px; border-radius:6px; text-align:center;">
+                        <span style="font-size:13px; color:#276749; font-weight:bold;">DANIŞMAN NET KAZANCI:</span>
+                        <span class="nowrap" style="font-size:18px; font-weight:900; color:#2f855a; margin-left:10px;">${document.getElementById('eh_h_r_net').innerText}</span>
                     </div>
                 </div>
 
-                <div style="margin-bottom:15px;">
-                    <h3 style="margin:0 0 8px 0; color:#3498db; border-bottom:2px solid #2c3e50; padding-bottom:4px; font-size:13px;">3. FİRMA / OFİS CARİSİ VE KÂRLILIK DURUMU</h3>
-                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <div style="margin-bottom:20px;">
+                    <h3 style="margin:0 0 10px 0; color:#3498db; border-bottom:2px solid #2c3e50; padding-bottom:5px; font-size:14px;">3. FİRMA / OFİS CARİSİ VE KÂRLILIK DURUMU</h3>
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
                         <thead>
                             <tr style="background:#f1f5f9; color:#2c3e50; text-align:left;">
-                                <th style="padding:6px; border:1px solid #ddd; width:50%;" colspan="2">GELİRLER (Tahsilat)</th>
-                                <th style="padding:6px; border:1px solid #ddd; width:50%;" colspan="2">GİDER VE KESİNTİLER</th>
+                                <th style="padding:8px; border:1px solid #ddd; width:50%;" colspan="2">GELİRLER (Tahsilat)</th>
+                                <th style="padding:8px; border:1px solid #ddd; width:50%;" colspan="2">GİDER VE KESİNTİLER</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;">(+) Müşteri Tahsilatı (KDV Dahil):</td><td style="padding:6px; border:1px solid #ddd; text-align:right; white-space:nowrap; width:15%;"><strong>${document.getElementById('eh_h_r_firma_tahsilat').innerText}</strong></td>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;">(-) Danışman Fatura Ödemesi:</td><td style="padding:6px; border:1px solid #ddd; color:#c0392b; text-align:right; white-space:nowrap; width:15%;"><strong>- ${document.getElementById('eh_h_r_firma_danisman_odeme').innerText}</strong></td>
+                            <tr style="background:#fff;">
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;">(+) Müşteri Tahsilatı (KDV Dahil):</td><td class="nowrap" style="padding:8px; border:1px solid #ddd; text-align:right; width:15%;"><strong>${document.getElementById('eh_h_r_firma_tahsilat').innerText}</strong></td>
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;">(-) Danışman Fatura Ödemesi:</td><td class="nowrap" style="padding:8px; border:1px solid #ddd; color:#c0392b; text-align:right; width:15%;"><strong>- ${document.getElementById('eh_h_r_firma_danisman_odeme').innerText}</strong></td>
                             </tr>
                             ${araciCikisSatiriHTML}
-                            <tr>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;"></td><td style="padding:6px; border:1px solid #ddd; width:15%;"></td>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;">(-) Devlete Ödenecek KDV Farkı:</td><td style="padding:6px; border:1px solid #ddd; color:#c0392b; text-align:right; white-space:nowrap; width:15%;"><strong>- ${document.getElementById('eh_h_r_firma_kdv_fark').innerText}</strong></td>
+                            <tr style="background:#fff;">
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;"></td><td style="padding:8px; border:1px solid #ddd; width:15%;"></td>
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;">(-) Devlete Ödenecek KDV Farkı:</td><td class="nowrap" style="padding:8px; border:1px solid #ddd; color:#c0392b; text-align:right; width:15%;"><strong>- ${document.getElementById('eh_h_r_firma_kdv_fark').innerText}</strong></td>
                             </tr>
-                            <tr>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;"></td><td style="padding:6px; border:1px solid #ddd; width:15%;"></td>
-                                <td style="padding:6px; border:1px solid #ddd; width:35%;">(-) Şirket/Kurumlar Vergisi:</td><td style="padding:6px; border:1px solid #ddd; color:#c0392b; text-align:right; white-space:nowrap; width:15%;"><strong>- ${document.getElementById('eh_h_r_firma_vergi').innerText}</strong></td>
+                            <tr style="background:#fff;">
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;"></td><td style="padding:8px; border:1px solid #ddd; width:15%;"></td>
+                                <td style="padding:8px; border:1px solid #ddd; width:35%;">(-) Şirket/Kurumlar Vergisi:</td><td class="nowrap" style="padding:8px; border:1px solid #ddd; color:#c0392b; text-align:right; width:15%;"><strong>- ${document.getElementById('eh_h_r_firma_vergi').innerText}</strong></td>
                             </tr>
                         </tbody>
                     </table>
-                    <div style="background:#f0f7ff; border:1px solid #bee3f8; padding:8px; margin-top:8px; border-radius:6px; text-align:center;">
-                        <span style="font-size:12px; color:#2b6cb0; font-weight:bold;">FİRMA NET KAZANCI:</span>
-                        <span style="font-size:16px; font-weight:900; color:#3182ce; margin-left:10px;">${document.getElementById('eh_h_r_firma_net').innerText}</span>
+                    <div style="background:#f0f7ff; border:1px solid #bee3f8; padding:10px; margin-top:10px; border-radius:6px; text-align:center;">
+                        <span style="font-size:13px; color:#2b6cb0; font-weight:bold;">FİRMA NET KAZANCI:</span>
+                        <span class="nowrap" style="font-size:18px; font-weight:900; color:#3182ce; margin-left:10px;">${document.getElementById('eh_h_r_firma_net').innerText}</span>
                     </div>
                 </div>
 
-                <div class="print-avoid-break" style="margin-top:15px; font-size:11px; color:#4a5568;">
+                <div style="margin-top:15px; font-size:12px; color:#4a5568;">
                     <strong>MUTABAKAT VE ONAY</strong><br>
-                    <p style="text-align:justify; line-height:1.3; margin-top:4px; font-style:italic;">İşbu belge, yukarıda detayı verilen gayrimenkul işlemine ait komisyon paylaşımının ve fatura kesim matrahlarının taraflarca kabul edildiğini gösterir bilgi formudur. Vergi hesaplamaları tahmini olup güncel mevzuata göre değişiklik gösterebilir.</p>
+                    <p style="text-align:justify; line-height:1.4; margin-top:5px; font-style:italic;">İşbu belge, yukarıda detayı verilen gayrimenkul işlemine ait komisyon paylaşımının ve fatura kesim matrahlarının taraflarca kabul edildiğini gösterir bilgi formudur. Vergi hesaplamaları tahmini olup güncel mevzuata göre değişiklik gösterebilir.</p>
                     
-                    <div style="display:flex; justify-content:space-between; margin-top:30px; padding:0 20px;">
+                    <div style="display:flex; justify-content:space-between; margin-top:40px; padding:0 20px;">
                         <div style="text-align:center;">
                             <strong style="text-transform:uppercase;">DANIŞMAN</strong><br><br><br>
                             ${dAd ? dAd.toUpperCase() : '.......................................'}<br><br>
@@ -1249,7 +1210,7 @@
             </div>
         `;
         let pdfName = fAd !== '...........................................' ? 'Mutabakat_' + fAd.replace(/\s+/g, '_') : 'Mutabakat_Raporu';
-        printCustomPDF(pdfName);
+        printCustomPDF(pdfName, htmlString);
     }
 
     function ehShowIslemRaporu() {
@@ -1276,18 +1237,13 @@
         let aCep = document.getElementById('ir_a_cep').value || '..................';
         let aIs = document.getElementById('ir_a_is').value || '..................';
 
-        let dFatura = document.getElementById('ir_danisman_fatura') ? document.getElementById('ir_danisman_fatura').value : '';
-        let oFatura = document.getElementById('ir_ofis_fatura') ? document.getElementById('ir_ofis_fatura').value : '';
-        let dFaturaText = dFatura ? `<strong style="color:#000;">${dFatura}</strong>` : '........................';
-        let oFaturaText = oFatura ? `<strong style="color:#000;">${oFatura}</strong>` : '........................';
-
         let mBedel = ehGetNum('eh_h_mulk_bedel');
         let saticiBedel = ehGetNum('eh_h_satici_bedel');
         let aliciBedel = ehGetNum('eh_h_alici_bedel');
         let hizBedeli = saticiBedel + aliciBedel; 
         
-        let sPerc = (mBedel > 0 && saticiBedel > 0) ? ` (%${((saticiBedel/mBedel)*100).toFixed(2)})` : "";
-        let aPerc = (mBedel > 0 && aliciBedel > 0) ? ` (%${((aliciBedel/mBedel)*100).toFixed(2)})` : "";
+        let sPerc = (mBedel > 0 && saticiBedel > 0) ? ` <span class="nowrap">(%${((saticiBedel/mBedel)*100).toFixed(2)})</span>` : "";
+        let aPerc = (mBedel > 0 && aliciBedel > 0) ? ` <span class="nowrap">(%${((aliciBedel/mBedel)*100).toFixed(2)})</span>` : "";
 
         let dPayOran = document.getElementById('eh_h_danisman_pay').value || "80";
         let fPayOran = 100 - parseFloat(dPayOran);
@@ -1295,142 +1251,130 @@
         let kdvOran = parseFloat(document.getElementById('eh_h_kdv').value) || 20;
         let kdvTutar = hizBedeli * (kdvOran / 100);
         let araciBrut = ehGetNum('eh_h_araci_payi') || 0;
-        let araciKesintiTipi = document.getElementById('eh_h_araci_kesinti_tipi') ? document.getElementById('eh_h_araci_kesinti_tipi').value : 'ortak';
         
-        let dBrutPay = 0, fBrutPay = 0;
-        if (araciKesintiTipi === 'ortak') {
-            let netHavuz = hizBedeli - araciBrut;
-            if(netHavuz < 0) netHavuz = 0;
-            dBrutPay = netHavuz * (parseFloat(dPayOran) / 100);
-            fBrutPay = netHavuz * (parseFloat(fPayOran) / 100);
-        } else {
-            let anaDanismanPayi = hizBedeli * (parseFloat(dPayOran) / 100);
-            fBrutPay = hizBedeli * (parseFloat(fPayOran) / 100);
-            dBrutPay = anaDanismanPayi - araciBrut;
-            if(dBrutPay < 0) dBrutPay = 0;
-        }
+        let netHavuz = hizBedeli - araciBrut;
+        if(netHavuz < 0) netHavuz = 0;
+        let dBrutPay = netHavuz * (parseFloat(dPayOran) / 100);
+        let fBrutPay = netHavuz - dBrutPay;
 
-        const area = document.getElementById('print-area');
-        area.innerHTML = `
-            <div style="padding:20px 40px; font-family:'Segoe UI', Tahoma, sans-serif; color: #000; font-size:12px; line-height: 1.4; max-width: 800px; margin: 0 auto;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+        let htmlString = `
+            <div style="padding:40px; color: #000; font-size:13px; line-height: 1.5; max-width: 800px; margin: 0 auto;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px;">
                     <div>
-                        <span style="font-size:13px; color:#555;">Gayrimenkul Danışmanı:</span><br>
-                        <strong style="font-size:15px; text-transform:uppercase;">${dAd !== '...........................................' ? dAd : '.......................................'}</strong>
+                        <span style="font-size:14px; color:#555;">Gayrimenkul Danışmanı:</span><br>
+                        <strong style="font-size:16px; text-transform:uppercase;">${dAd !== '...........................................' ? dAd : '.......................................'}</strong>
                     </div>
                     <div style="text-align:right;">
-                        <h2 style="margin:0 0 5px 0; font-size:22px; color:#2c3e50; text-transform:uppercase; letter-spacing:1px;">${fAd}</h2>
-                        <div style="font-size:12px; color:#555; margin-bottom:2px;"><strong>İşlem Tarihi:</strong> ${iTarih}</div>
-                        <div style="font-size:12px; color:#555;"><strong>Düzenleme Tarihi:</strong> ${rTarih}</div>
+                        <h2 style="margin:0 0 8px 0; font-size:24px; color:#2c3e50; text-transform:uppercase; letter-spacing:1px;">${fAd}</h2>
+                        <div style="font-size:13px; color:#555; margin-bottom:4px;"><strong>İşlem Tarihi:</strong> ${iTarih}</div>
+                        <div style="font-size:13px; color:#555;"><strong>Düzenleme Tarihi:</strong> ${rTarih}</div>
                     </div>
                 </div>
 
-                <div style="text-align:center; margin-bottom: 15px;">
-                    <h1 style="margin:0; font-size:22px; font-weight: 900; letter-spacing: 2px;">İŞLEM RAPORU</h1>
+                <div style="text-align:center; margin-bottom: 25px;">
+                    <h1 style="margin:0; font-size:26px; font-weight: 900; letter-spacing: 2px;">İŞLEM RAPORU</h1>
                 </div>
 
-                <h3 style="background:#f1f5f9; padding:6px 10px; margin:0; border:1px solid #ccc; font-size:13px; color:#2c3e50;">Portföy Bilgileri</h3>
-                <table style="width:100%; border-collapse:collapse; margin-bottom:15px; border:1px solid #ccc;">
+                <h3 style="background:#f1f5f9; padding:8px 12px; margin:0; border:1px solid #ccc; font-size:14px; color:#2c3e50;">Portföy Bilgileri</h3>
+                <table style="width:100%; border-collapse:collapse; margin-bottom:20px; border:1px solid #ccc; background:#fff;">
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">Adres:</td>
-                        <td style="padding:6px; border:1px solid #ccc;" colspan="3">${adres}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">Mülk Adres Bilgisi:</td>
+                        <td style="padding:10px; border:1px solid #ccc;" colspan="3">${adres}</td>
                     </tr>
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">İşlem Tipi:</td>
-                        <td style="padding:6px; border:1px solid #ccc; width:30%;">${iTipi}</td>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">Paylaşım Oranı:</td>
-                        <td style="padding:6px; border:1px solid #ccc; width:30%;">%${dPayOran} Danışman / %${fPayOran} Ofis</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">İşlem Tipi:</td>
+                        <td style="padding:10px; border:1px solid #ccc; width:30%;">${iTipi}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">Paylaşım Oranı:</td>
+                        <td style="padding:10px; border:1px solid #ccc; width:30%; white-space:nowrap;">%${dPayOran} Danışman / %${fPayOran} Ofis</td>
                     </tr>
                 </table>
 
-                <h3 style="background:#f1f5f9; padding:6px 10px; margin:0; border:1px solid #ccc; font-size:13px; color:#2c3e50;">Satıcı / Kiraya Veren Bilgileri</h3>
-                <table style="width:100%; border-collapse:collapse; margin-bottom:15px; border:1px solid #ccc; border-bottom:1px solid #ccc;">
+                <h3 style="background:#f1f5f9; padding:8px 12px; margin:0; border:1px solid #ccc; font-size:14px; color:#2c3e50;">Satıcı / Kiraya Veren Bilgileri</h3>
+                <table style="width:100%; border-collapse:collapse; margin-bottom:20px; border:1px solid #ccc; border-bottom:1px solid #ccc; background:#fff;">
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">Adı Soyadı:</td>
-                        <td style="padding:6px; border:1px solid #ccc; width:30%; text-transform:uppercase;">${sAd}</td>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">Cep Telefonu:</td>
-                        <td style="padding:6px; border:1px solid #ccc; width:30%;">${sCep}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">Adı Soyadı:</td>
+                        <td style="padding:10px; border:1px solid #ccc; width:30%; text-transform:uppercase;">${sAd}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">Cep Telefonu:</td>
+                        <td style="padding:10px; border:1px solid #ccc; width:30%; white-space:nowrap;">${sCep}</td>
                     </tr>
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">TC No / VKN:</td>
-                        <td style="padding:6px; border:1px solid #ccc; width:30%;">${sTc}</td>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">İş Telefonu:</td>
-                        <td style="padding:6px; border:1px solid #ccc; width:30%;">${sIs}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">TC No / VKN:</td>
+                        <td style="padding:10px; border:1px solid #ccc; width:30%; white-space:nowrap;">${sTc}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">İş Telefonu:</td>
+                        <td style="padding:10px; border:1px solid #ccc; width:30%; white-space:nowrap;">${sIs}</td>
                     </tr>
                 </table>
 
-                <h3 style="background:#f1f5f9; padding:6px 10px; margin:0; border:1px solid #ccc; font-size:13px; color:#2c3e50;">Alıcı / Kiracı Bilgileri</h3>
-                <table style="width:100%; border-collapse:collapse; margin-bottom:15px; border:1px solid #ccc;">
+                <h3 style="background:#f1f5f9; padding:8px 12px; margin:0; border:1px solid #ccc; font-size:14px; color:#2c3e50;">Alıcı / Kiracı Bilgileri</h3>
+                <table style="width:100%; border-collapse:collapse; margin-bottom:20px; border:1px solid #ccc; background:#fff;">
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">Adı Soyadı:</td>
-                        <td style="padding:6px; border:1px solid #ccc; width:30%; text-transform:uppercase;">${aAd}</td>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">Cep Telefonu:</td>
-                        <td style="padding:6px; border:1px solid #ccc; width:30%;">${aCep}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">Adı Soyadı:</td>
+                        <td style="padding:10px; border:1px solid #ccc; width:30%; text-transform:uppercase;">${aAd}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">Cep Telefonu:</td>
+                        <td style="padding:10px; border:1px solid #ccc; width:30%; white-space:nowrap;">${aCep}</td>
                     </tr>
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">TC No / VKN:</td>
-                        <td style="padding:6px; border:1px solid #ccc; width:30%;">${aTc}</td>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:20%;">İş Telefonu:</td>
-                        <td style="padding:6px; border:1px solid #ccc; width:30%;">${aIs}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">TC No / VKN:</td>
+                        <td style="padding:10px; border:1px solid #ccc; width:30%; white-space:nowrap;">${aTc}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:20%; white-space:nowrap;">İş Telefonu:</td>
+                        <td style="padding:10px; border:1px solid #ccc; width:30%; white-space:nowrap;">${aIs}</td>
                     </tr>
                 </table>
 
-                <h3 style="background:#f1f5f9; padding:6px 10px; margin:0; border:1px solid #ccc; font-size:13px; color:#2c3e50;">İşlem ve Finansal Bilgiler</h3>
-                <table style="width:100%; border-collapse:collapse; margin-bottom:15px; border:1px solid #ccc;">
+                <h3 style="background:#f1f5f9; padding:8px 12px; margin:0; border:1px solid #ccc; font-size:14px; color:#2c3e50;">İşlem ve Finansal Bilgiler</h3>
+                <table style="width:100%; border-collapse:collapse; margin-bottom:30px; border:1px solid #ccc; background:#fff;">
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; width:60%;">Mülk Satış / Kiralama Bedeli:</td>
-                        <td style="padding:6px; border:1px solid #ccc; text-align:right; white-space:nowrap;">${mBedel > 0 ? ehFormatter.format(mBedel) : '........................'}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; width:60%;">Mülk Satış / Kiralama Bedeli:</td>
+                        <td class="nowrap" style="padding:10px; border:1px solid #ccc; text-align:right;">${mBedel > 0 ? ehFormatter.format(mBedel) : '........................'}</td>
                     </tr>
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold;">Satıcıdan Alınan Hizmet Bedeli (KDV Hariç):</td>
-                        <td style="padding:6px; border:1px solid #ccc; text-align:right; white-space:nowrap;">${saticiBedel > 0 ? ehFormatter.format(saticiBedel) + sPerc : '........................'}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold;">Satıcıdan Alınan Hizmet Bedeli (KDV Hariç):</td>
+                        <td class="nowrap" style="padding:10px; border:1px solid #ccc; text-align:right;">${saticiBedel > 0 ? ehFormatter.format(saticiBedel) + sPerc : '........................'}</td>
                     </tr>
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold;">Alıcıdan Alınan Hizmet Bedeli (KDV Hariç):</td>
-                        <td style="padding:6px; border:1px solid #ccc; text-align:right; white-space:nowrap;">${aliciBedel > 0 ? ehFormatter.format(aliciBedel) + aPerc : '........................'}</td>
-                    </tr>
-                    <tr style="background:#f8fafc;">
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; color:#2c3e50;">Tahsil Edilen Toplam Hizmet Bedeli (KDV Hariç):</td>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold; color:#2c3e50; text-align:right; white-space:nowrap;">${hizBedeli > 0 ? ehFormatter.format(hizBedeli) : '........................'}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold;">Alıcıdan Alınan Hizmet Bedeli (KDV Hariç):</td>
+                        <td class="nowrap" style="padding:10px; border:1px solid #ccc; text-align:right;">${aliciBedel > 0 ? ehFormatter.format(aliciBedel) + aPerc : '........................'}</td>
                     </tr>
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold;">KDV Tutarı (%${kdvOran}):</td>
-                        <td style="padding:6px; border:1px solid #ccc; text-align:right; white-space:nowrap;">${hizBedeli > 0 ? ehFormatter.format(kdvTutar) : '........................'}</td>
-                    </tr>
-                    ${araciBrut > 0 ? `<tr><td style="padding:6px; border:1px solid #ccc; font-weight:bold; color:#c0392b;">Dış Aracıya Ödenen Pay:</td><td style="padding:6px; border:1px solid #ccc; color:#c0392b; text-align:right; white-space:nowrap;">${ehFormatter.format(araciBrut)}</td></tr>` : ''}
-                    <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold;">Danışman Hizmet Bedeli Payı (Brüt):</td>
-                        <td style="padding:6px; border:1px solid #ccc; text-align:right; white-space:nowrap;">${hizBedeli > 0 ? ehFormatter.format(dBrutPay) : '........................'}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold; color:#2c3e50;">Tahsil Edilen Toplam Hizmet Bedeli (KDV Hariç):</td>
+                        <td class="nowrap" style="padding:10px; border:1px solid #ccc; font-weight:bold; color:#2c3e50; text-align:right;">${hizBedeli > 0 ? ehFormatter.format(hizBedeli) : '........................'}</td>
                     </tr>
                     <tr>
-                        <td style="padding:6px; border:1px solid #ccc; font-weight:bold;">Firma / Broker Hizmet Bedeli Payı (Brüt):</td>
-                        <td style="padding:6px; border:1px solid #ccc; text-align:right; white-space:nowrap;">${hizBedeli > 0 ? ehFormatter.format(fBrutPay) : '........................'}</td>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold;">KDV Tutarı (%${kdvOran}):</td>
+                        <td class="nowrap" style="padding:10px; border:1px solid #ccc; text-align:right;">${hizBedeli > 0 ? ehFormatter.format(kdvTutar) : '........................'}</td>
+                    </tr>
+                    ${araciBrut > 0 ? `<tr><td style="padding:10px; border:1px solid #ccc; font-weight:bold; color:#c0392b;">Dış Aracıya Ödenen Pay:</td><td class="nowrap" style="padding:10px; border:1px solid #ccc; color:#c0392b; text-align:right;">${ehFormatter.format(araciBrut)}</td></tr>` : ''}
+                    <tr>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold;">Danışman Hizmet Bedeli Payı (Brüt):</td>
+                        <td class="nowrap" style="padding:10px; border:1px solid #ccc; text-align:right;">${hizBedeli > 0 ? ehFormatter.format(dBrutPay) : '........................'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px; border:1px solid #ccc; font-weight:bold;">Firma / Broker Hizmet Bedeli Payı (Brüt):</td>
+                        <td class="nowrap" style="padding:10px; border:1px solid #ccc; text-align:right;">${hizBedeli > 0 ? ehFormatter.format(fBrutPay) : '........................'}</td>
                     </tr>
                 </table>
 
-                <div class="print-avoid-break">
-                    <table style="width:100%; border-collapse:collapse; margin-bottom:20px; border:1px solid #ccc;">
-                        <tr>
-                            <td style="padding:10px; border:1px solid #ccc; width:50%; font-size:12px; color:#555;">GMD FATURA NO: ${dFaturaText}</td>
-                            <td style="padding:10px; border:1px solid #ccc; width:50%; font-size:12px; color:#555;">OFİS FATURA NO: ${oFaturaText}</td>
-                        </tr>
-                    </table>
+                <table style="width:100%; border-collapse:collapse; margin-bottom:50px; border:1px solid #ccc; background:#fff;">
+                    <tr>
+                        <td style="padding:15px 10px; border:1px solid #ccc; width:50%; font-size:14px; color:#555;">GMD FATURA NO:</td>
+                        <td style="padding:15px 10px; border:1px solid #ccc; width:50%; font-size:14px; color:#555;">OFİS FATURA NO:</td>
+                    </tr>
+                </table>
 
-                    <div style="display: flex; justify-content: space-around; margin-top: 20px;">
-                        <div style="text-align: center;">
-                            <strong style="text-transform: uppercase;">GAYRİMENKUL DANIŞMANI</strong><br><br><br>
-                            ${dAd !== '...........................................' ? dAd.toUpperCase() : '.......................................'}
-                        </div>
-                        <div style="text-align: center;">
-                            <strong style="text-transform: uppercase;">BROKER / OFİS YÖNETİCİSİ</strong><br><br><br>
-                            ${bAd !== '...........................................' ? bAd.toUpperCase() : '.......................................'}
-                        </div>
+                <div style="display: flex; justify-content: space-around; margin-top: 30px;">
+                    <div style="text-align: center;">
+                        <strong style="text-transform: uppercase;">GAYRİMENKUL DANIŞMANI</strong><br><br><br>
+                        ${dAd !== '...........................................' ? dAd.toUpperCase() : '.......................................'}
+                    </div>
+                    <div style="text-align: center;">
+                        <strong style="text-transform: uppercase;">BROKER / OFİS YÖNETİCİSİ</strong><br><br><br>
+                        ${bAd !== '...........................................' ? bAd.toUpperCase() : '.......................................'}
                     </div>
                 </div>
             </div>
         `;
         let pdfName = sAd !== '...........................................' ? 'IslemRaporu_' + sAd.replace(/\s+/g, '_') : 'Islem_Raporu';
-        printCustomPDF(pdfName);
+        printCustomPDF(pdfName, htmlString);
     }
 
     function ehShowGiderPusulasi() {
@@ -1447,40 +1391,39 @@
         let aStopaj = araciBrut * (araciStopajOran / 100);
         let aNet = araciBrut - aStopaj;
 
-        const area = document.getElementById('print-area');
-        area.innerHTML = `
-            <div style="padding:40px; font-family:'Segoe UI', Tahoma, sans-serif; color: #000; max-width:800px; margin:0 auto;">
+        let htmlString = `
+            <div style="padding:40px; color: #000; max-width:800px; margin:0 auto;">
                 <div style="text-align:center; border-bottom: 2px solid #000; padding-bottom:15px; margin-bottom: 30px;">
                     <div style="text-align:left; font-size:13px; margin-bottom:10px;"><strong>Tarih:</strong> ${islemTarih}</div>
                     <h2 style="margin:0; font-size:26px; text-transform:uppercase; letter-spacing:1px; color:#2c3e50;">${fAd}</h2>
                     <h3 style="margin:10px 0 0 0; font-size:20px; letter-spacing: 2px;">GİDER PUSULASI</h3>
                 </div>
 
-                <div style="border: 1px solid #000; padding:20px; margin-bottom:20px; border-radius:5px;">
+                <div style="border: 1px solid #000; padding:20px; margin-bottom:20px; border-radius:5px; background:#fff;">
                     <h4 style="margin:0 0 15px 0; border-bottom:1px dashed #ccc; padding-bottom:5px; color:#2c3e50;">HİZMETİ YAPAN (ARACI) BİLGİLERİ</h4>
                     <table style="width:100%; font-size:14px; line-height:2.2;">
-                        <tr><td style="width:180px; font-weight:bold;">Adı Soyadı / Unvanı:</td><td style="text-transform:uppercase;">${araciAd}</td></tr>
-                        <tr><td style="font-weight:bold;">TC Kimlik No / VKN:</td><td>${araciTc}</td></tr>
-                        <tr><td style="font-weight:bold;">İkametgah Adresi:</td><td style="text-transform:uppercase;">${araciAdres}</td></tr>
+                        <tr><td style="width:180px; font-weight:bold; white-space:nowrap;">Adı Soyadı / Unvanı:</td><td style="text-transform:uppercase;">${araciAd}</td></tr>
+                        <tr><td style="font-weight:bold; white-space:nowrap;">TC Kimlik No / VKN:</td><td class="nowrap">${araciTc}</td></tr>
+                        <tr><td style="font-weight:bold; white-space:nowrap;">İkametgah Adresi:</td><td style="text-transform:uppercase;">${araciAdres}</td></tr>
                     </table>
                 </div>
 
-                <div style="border: 1px solid #000; padding:20px; margin-bottom:40px; border-radius:5px;">
+                <div style="border: 1px solid #000; padding:20px; margin-bottom:40px; border-radius:5px; background:#fff;">
                     <h4 style="margin:0 0 15px 0; border-bottom:1px dashed #ccc; padding-bottom:5px; color:#2c3e50;">İŞİN MAHİYETİ VE HESAP TABLOSU</h4>
                     <div style="margin-bottom:20px; font-size:14px;"><strong>İşin Mahiyeti:</strong> Gayrimenkul Aracılık / Referans Hizmet Bedeli</div>
                     
-                    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:14px; background:#fff;">
                         <tr>
                             <td style="padding:12px; border:1px solid #000; font-weight:bold;">Hizmet Bedeli (Brüt Matrah)</td>
-                            <td style="padding:12px; border:1px solid #000; text-align:right; white-space:nowrap;">${ehFormatter.format(araciBrut)}</td>
+                            <td class="nowrap" style="padding:12px; border:1px solid #000; text-align:right;">${ehFormatter.format(araciBrut)}</td>
                         </tr>
                         <tr>
                             <td style="padding:12px; border:1px solid #000; font-weight:bold;">Gelir Vergisi (Stopaj - %${araciStopajOran})</td>
-                            <td style="padding:12px; border:1px solid #000; text-align:right; color:#c0392b; white-space:nowrap;">- ${ehFormatter.format(aStopaj)}</td>
+                            <td class="nowrap" style="padding:12px; border:1px solid #000; text-align:right; color:#c0392b;">- ${ehFormatter.format(aStopaj)}</td>
                         </tr>
-                        <tr style="background:#f8fafc;">
+                        <tr>
                             <td style="padding:15px 12px; border:1px solid #000; font-weight:bold; font-size:16px; color:#2c3e50;">ÖDENECEK NET TUTAR</td>
-                            <td style="padding:15px 12px; border:1px solid #000; text-align:right; font-weight:900; font-size:16px; color:#2c3e50; white-space:nowrap;">${ehFormatter.format(aNet)}</td>
+                            <td class="nowrap" style="padding:15px 12px; border:1px solid #000; text-align:right; font-weight:900; font-size:16px; color:#2c3e50;">${ehFormatter.format(aNet)}</td>
                         </tr>
                     </table>
                 </div>
@@ -1506,7 +1449,7 @@
             </div>
         `;
         let pdfName = araciAd !== '...........................................' ? 'GiderPusulasi_' + araciAd.replace(/\s+/g, '_') : 'Gider_Pusulasi';
-        printCustomPDF(pdfName);
+        printCustomPDF(pdfName, htmlString);
     }
 
     window.onload = function() { 
