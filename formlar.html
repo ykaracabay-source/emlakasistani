@@ -170,6 +170,22 @@
             }
         }
 
+       /* ODAK MODU (GENİŞ EKRAN) TASARIMI */
+        body.focus-mode header,
+        body.focus-mode .action-bar,
+        body.focus-mode .hide-in-focus {
+            display: none !important;
+        }
+        body.focus-mode .left-panel {
+            width: 320px; /* Doldurma alanına yeterli yer bırakıp kağıdı büyütüyoruz */
+            padding-top: 60px; /* Çıkış butonu için üstte boşluk */
+        }
+        .btn-exit-focus {
+            display: none; position: fixed; top: 15px; left: 15px; background: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.2s;
+        }
+        .btn-exit-focus:hover { background: #c0392b; transform: translateY(-2px); }
+        body.focus-mode .btn-exit-focus { display: flex; align-items: center; gap: 8px; }
+
        /* ========================================= */
         /* YENİ MODERN ARAÇ ÇUBUĞU (SEKMELİ) TASARIMI */
         /* ========================================= */
@@ -252,18 +268,27 @@
     </div>
 </div>
 
-            <div class="form-group">
+            <!-- YÜZEN ÇIKIŞ BUTONU -->
+            <button class="btn-exit-focus" onclick="toggleFocusMode()"><i class="fa-solid fa-compress"></i> ODAKTAN ÇIK</button>
+
+            <div class="form-group hide-in-focus">
                 <label><i class="fa-solid fa-layer-group"></i> Şablon Seçiniz</label>
                 <select id="templateSelector" onchange="loadTemplate()" style="font-weight: bold; color: #2c3e50;"></select>
             </div>
 
-            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+            <hr class="hide-in-focus" style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
 
+            <!-- ETİKET BAŞLIĞI VE GENİŞ EKRAN BUTONU -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <label style="color: #27ae60; font-weight: bold; font-size: 11px; margin:0;"><i class="fa-solid fa-pen-to-square"></i> DOLDURULACAK ALANLAR</label>
+                <button class="hide-in-focus" onclick="toggleFocusMode()" style="background: #34495e; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; display: flex; align-items: center; gap: 5px; transition: 0.2s;" title="Sadece sözleşmeye odaklan"><i class="fa-solid fa-expand"></i> GENİŞ EKRAN</button>
+            </div>
+            
            <div id="dynamicInputsContainer"></div>
 
-            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+            <hr class="hide-in-focus" style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
             
-            <div class="form-group">
+            <div class="form-group hide-in-focus">
                 <label style="color: #2980b9;"><i class="fa-solid fa-box-archive"></i> KAYITLI EVRAKLAR (ARŞİV)</label>
                 <input type="text" id="archiveSearch" placeholder="Müşteri veya evrak adı ara..." onkeyup="searchArchive()" style="margin-bottom: 10px; border-color: #2980b9;">
                 <!-- DİKKAT: max-height yerine height kullanılarak kutu boyutu sabitlendi -->
@@ -1278,6 +1303,12 @@ Ek:
                 refreshArchiveList();
                 document.getElementById('a4Document').innerHTML = ""; 
             }
+        }
+
+      function toggleFocusMode() {
+            document.body.classList.toggle('focus-mode');
+            // A4 kağıdının geniş ekrana yumuşak oturması için bir tetikleme yapıyoruz
+            window.dispatchEvent(new Event('resize'));
         }
 
        function switchToolbarTab(tabId) {
