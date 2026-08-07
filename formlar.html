@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>EPA - Akıllı Form ve Sözleşme Yöneticisi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #27ae60;
+            --bg-color: #ecf0f1;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: var(--bg-color); height: 100vh; display: flex; flex-direction: column; }
+        
+        /* HEADER TASARIMI */
+        header { background: white; padding: 15px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .header-title { color: var(--primary); margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        /* ANA DÜZEN (BÖLÜNMÜŞ EKRAN) */
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        
+        /* SOL PANEL - KONTROLLER VE GİRDİLER */
+        .left-panel { width: 400px; background: white; padding: 20px; overflow-y: auto; border-right: 1px solid #ddd; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 5; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 11px; font-weight: bold; color: #555; margin-bottom: 5px; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; transition: 0.3s; }
+        .form-group input:focus { border-color: var(--secondary); outline: none; box-shadow: 0 0 5px rgba(52, 152, 219, 0.3); }
+        
+       /* SAĞ PANEL - A4 ÖNİZLEME & ARAÇ ÇUBUĞU */
+        .right-panel { flex: 1; background: #5a6268; padding: 20px; overflow-y: auto; display: block; text-align: center; }
+        
+      /* METİN DÜZENLEME ARAÇ ÇUBUĞU (MİNİ WORD) */
+        .editor-toolbar { 
+            background: white; padding: 10px; 
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+            width: fit-content; 
+            margin: 0 auto 20px auto;
+            display: flex; gap: 5px; 
+            position: sticky; top: 0; z-index: 50; 
+        }
+        .editor-btn { background: #f1f2f6; border: 1px solid #dcdde1; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; color: #2c3e50; transition: 0.2s; }
+        .editor-btn:hover { background: #dfe4ea; }
+
+        /* ŞABLON SEÇİCİ DÜĞME TASARIMI */
+        #templateSelector {
+            background-color: #34495e; color: white !important;
+            border: 2px solid #2c3e50; padding: 10px;
+            border-radius: 6px; font-size: 13px; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%; transition: 0.3s;
+        }
+        #templateSelector:hover { background-color: #2c3e50; }
+        #templateSelector option { background-color: white; color: #2c3e50 !important; }
+
+        /* BAŞLIK VE METİN ARASI BOŞLUK DÜZELTMESİ */
+        .a4-paper h3, .a4-paper h4, .a4-paper h5 { margin: 5px 0 !important; padding: 0 !important; }
+        .a4-paper p, .a4-paper div { margin-bottom: 3px !important; }
+        .a4-paper br + br { display: none; } 
+        .a4-paper b { display: inline-block; margin-top: 5px; }
+
+     /* YAZDIRMA BOŞLUKLARI */
+    @page {
+        size: A4;
+        margin: 15mm 0; 
+    }
+
+    /* A4 KAĞIDI TASARIMI (TEMİZ GÖRÜNÜM) */
+    .a4-paper {
+        width: 210mm;
+        min-height: 297mm;
+        padding: 15mm 15mm; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        box-sizing: border-box;
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 11pt;
+        line-height: 1.2; 
+        color: #000;
+        margin: 0 auto 50px auto;
+        text-align: left;
+        position: relative;
+        background-color: white;
+    }
+    .a4-paper:focus { outline: none; }
+        
+        /* ARAÇ ÇUBUĞU (BUTONLAR) */
+        .action-bar { display: flex; gap: 8px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px dashed #eee; flex-wrap: wrap; }
+        .btn { flex: 1; min-width: 100px; padding: 10px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; font-size: 12px; }
+        .btn-pdf { background: #c0392b; }
+        .btn-wp { background: #25D366; }
+        .btn-template { background: #8e44ad; }
+        .btn-delete { background: #7f8c8d; }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .dynamic-field { background-color: #e8f8f5; font-weight: bold; padding: 0 4px; color: #16a085; }
+
+        /* SAYFA BÖLÜCÜ (PAGE BREAK) TASARIMI */
+        .page-break-indicator {
+            display: block;
+            width: 100%;
+            text-align: center;
+            border-top: 2px dashed #2980b9;
+            margin: 25px 0;
+            padding-top: 10px;
+            color: #2980b9;
+            font-weight: bold;
+            font-size: 11px;
+            letter-spacing: 1px;
+            page-break-after: always; 
+            user-select: none; 
+        }
+
+       /* KILAVUZ PENCERESİ (MODAL) TASARIMI */
+        .guide-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .guide-modal-content { background: white; width: 750px; max-width: 90%; max-height: 85vh; overflow-y: auto; border-radius: 8px; padding: 30px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .guide-modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #7f8c8d; border: none; background: none; transition: 0.2s; }
+        .guide-modal-close:hover { color: #c0392b; }
+        .guide-section { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .guide-section h4 { color: #2980b9; margin-top: 0; margin-bottom: 15px; font-size: 16px; border-left: 4px solid #2980b9; padding-left: 10px; }
+        .guide-section p { font-size: 13px; line-height: 1.6; color: #34495e; margin-bottom: 10px; }
+        .guide-tag-example { display: inline-block; background: #e8f8f5; color: #16a085; padding: 2px 6px; border-radius: 4px; font-weight: bold; letter-spacing: 0.5px; }
+        @media print { .guide-modal-overlay { display: none !important; } }
+
+        /* ARAÇ ÇUBUĞU AKILLI IZGARA */
+        #extendedToolbar {
+            display: none; 
+            align-items: center; 
+            gap: 5px;
+            flex-wrap: wrap !important; 
+            justify-content: center !important; 
+            padding: 5px;
+            width: 100%; 
+        }
+
+     @media print {
+            body { background: white; display: block; margin: 0; padding: 0; }
+            header, .left-panel, .editor-toolbar, .modern-toolbar, .no-print { display: none !important; }
+            .main-container { display: block; overflow: visible; }
+            .right-panel { background: white; padding: 0; display: block; overflow: visible; margin: 0; }
+            
+            /* A4 kağıdının yazıcıya tam oturması için kenar boşlukları */
+            .a4-paper { 
+                box-shadow: none; 
+                width: 100%; 
+                min-height: auto; 
+                padding: 15mm 15mm; 
+                margin: 0; 
+                background-image: none !important; /* YAZICIDA KIRMIZI KILAVUZ ÇİZGİSİNİ GİZLE */
+            }
+            .dynamic-field { background-color: transparent; border-bottom: none; color: black; }
+            
+            /* SAYFA KAYMALARINI ÖNLEYEN AKILLI KESME KURALLARI */
+            h3, h4, h5, b { page-break-after: avoid; } 
+            table { page-break-inside: avoid; } 
+            tr { page-break-inside: avoid; page-break-after: auto; } 
+            td { page-break-inside: avoid; }
+            .a4-paper div, .a4-paper p { page-break-inside: auto; }
+
+            /* Yazıcıda mavi sayfa bölücü çizgisini gizle */
+            .page-break-indicator {
+                border: none !important;
+                color: transparent !important;
+                background: transparent !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                height: 1px !important; 
+                visibility: hidden !important; 
+            }
+        }
+
+       /* ========================================= */
+        /* YENİ MODERN ARAÇ ÇUBUĞU (SEKMELİ) TASARIMI */
+        /* ========================================= */
+        .modern-toolbar { background: white; border-radius: 0; box-shadow: 0 6px 20px rgba(0,0,0,0.15); margin: -20px -20px 20px -20px; width: auto; max-width: none; position: sticky; top: -20px; z-index: 50; border-bottom: 1px solid #dcdde1; }
+        
+        /* Canlı ve Belirgin Sekmeler */
+        .toolbar-tabs { display: flex; background: #ecf0f1; padding: 10px 20px 0 20px; gap: 6px; border-bottom: 3px solid #2980b9; }
+        .tab-btn { flex: 1; max-width: 250px; padding: 12px 15px; border: none; background: #bdc3c7; border-radius: 8px 8px 0 0; font-weight: bold; font-size: 14px; color: #2c3e50; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: inset 0 -2px 5px rgba(0,0,0,0.05); }
+        .tab-btn:hover { background: #95a5a6; color: white; }
+        .tab-btn.active { background: #2980b9; color: white; box-shadow: none; }
+        
+        /* İçerik ve Buton Grupları (Tek Satır - FlexBox Yapısı) */
+        .toolbar-content { display: none; padding: 12px 20px; gap: 10px; flex-wrap: nowrap; justify-content: center; align-items: center; background: white; overflow-x: auto; }
+        .tab-btn.active { background: #2980b9; color: white; box-shadow: none; }
+        
+        /* İçerik ve Buton Grupları (Kaymayı Engelleyen FlexBox Yapısı) */
+        .toolbar-content { display: none; padding: 12px; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; background: white; }
+        .toolbar-content.active-tab { display: flex; }
+        .btn-group { display: flex; align-items: center; background: #f8f9fa; border: 1px solid #dcdde1; border-radius: 6px; padding: 3px; gap: 2px; }
+        
+        /* Şık ve Kompakt Butonlar */
+        .modern-btn { background: transparent; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 15px; color: #34495e; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+        .modern-btn:hover { background: #e2e6ea; color: #2980b9; }
+        
+        /* Dikkat Çeken Özel Aksiyon Butonları */
+        .btn-action { background: #fdfaef; color: #e67e22; border-radius: 4px; font-weight: bold; font-size: 13px; }
+        .btn-action:hover { background: #f1c40f; color: white; }
+   /* YAZICI VE PDF OPTİMİZASYONU (Kenar Boşluklarını Sıfırlama) */
+        @media print {
+            @page { margin: 0; size: A4; }
+            body { margin: 0; padding: 0; background-color: white; }
+            .sidebar, .action-bar, .toolbar-container, header { display: none !important; }
+            .main-content { margin: 0; padding: 0; width: 100%; display: block; }
+            .a4-paper { 
+                margin: 0 !important; 
+                padding: 15mm 15mm !important; 
+                box-shadow: none !important; 
+                border: none !important; 
+                width: 210mm !important; 
+                min-height: 297mm !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+  <header>
+        <div>
+            <h2 class="header-title"><i class="fa-solid fa-file-signature"></i> EPA - Akıllı Form Yönetimi</h2>
+            <div style="font-size: 14px; color: #7f8c8d; margin-top: 5px;">Sol menüdeki veri girişleri kağıda anında yansır</div>
+        </div>
+        <button onclick="window.close()" title="Sekmeyi Kapat ve Ana Ekrana Dön" style="background: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;">
+            <i class="fa-solid fa-right-from-bracket"></i> ANA EKRANA DÖN
+        </button>
+    </header>
+    <div class="main-container">
+        <!-- SOL PANEL: KONTROLLER -->
+        <div class="left-panel">
+           <div class="action-bar">
+                <!-- TEMİZ YAZDIRMA BUTONU -->
+                <button class="btn btn-pdf" onclick="smartPrint()"><i class="fa-solid fa-print"></i> Yazdır / PDF</button>
+                <button class="btn" style="background: #2980b9; color: white;" onclick="saveToArchive()"><i class="fa-solid fa-file-shield"></i> Arşive Kaydet</button>
+                <button class="btn btn-wp" onclick="sendToWP()"><i class="fa-brands fa-whatsapp"></i> WP Gönder</button>
+            </div>
+          <div class="action-bar" style="border-bottom: none; padding-bottom: 0;">
+               <button class="btn btn-template" onclick="addNewTemplate()"><i class="fa-solid fa-folder-plus"></i> Yeni Şablon</button>
+                <button class="btn" style="background: #27ae60; color: white;" onclick="updateCurrentTemplate()"><i class="fa-solid fa-save"></i> Güncelle</button>
+                <button class="btn btn-delete" onclick="deleteCurrentTemplate()"><i class="fa-solid fa-trash"></i> Sil</button>
+                <button class="btn" style="background: #f39c12; color: white; margin-top: 5px;" onclick="renameCurrentTemplate()"><i class="fa-solid fa-pen"></i> İsim Değiştir</button>
+            </div>
+            
+           <div class="action-bar" style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; gap: 8px; width: 100%;">
+        <button class="btn" style="background: #e67e22; color: white; flex: 2;" onclick="copyAIPrompt()"><i class="fa-solid fa-robot"></i> AI Şablon Promptu</button>
+        <button class="btn" style="background: #8e44ad; color: white; flex: 1;" onclick="openGuideModal()"><i class="fa-solid fa-circle-info"></i> Kılavuz</button>
+        <button class="btn" style="background: #34495e; color: white; flex: 1;" onclick="openCompanyModal()"><i class="fa-solid fa-building"></i> Firma Ayarları</button>
+    </div>
+    <div style="font-size: 11px; color: #7f8c8d; text-align: center; font-style: italic; padding: 0 5px;">
+        * Hazırladığınız boş formatı Akıllı Form sistemine uygun HTML yapısına dönüştürmek için önce kopyalayıp, ardından AI aracına yapıştırın.
+    </div>
+</div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-layer-group"></i> Şablon Seçiniz</label>
+                <select id="templateSelector" onchange="loadTemplate()" style="font-weight: bold; color: #2c3e50;"></select>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+
+           <div id="dynamicInputsContainer"></div>
+
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+            
+            <div class="form-group">
+                <label style="color: #2980b9;"><i class="fa-solid fa-box-archive"></i> KAYITLI EVRAKLAR (ARŞİV)</label>
+                <input type="text" id="archiveSearch" placeholder="Müşteri veya evrak adı ara..." onkeyup="searchArchive()" style="margin-bottom: 10px; border-color: #2980b9;">
+                <!-- DİKKAT: max-height yerine height kullanılarak kutu boyutu sabitlendi -->
+                <div id="archiveList" style="height: 260px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 5px; background: #f9f9f9;">
+                </div>
+            </div>
+        </div>
+
+        <!-- SAĞ PANEL: CANLI ÖNİZLEME -->
+        <div class="right-panel">
+           <div class="modern-toolbar no-print">
+                <!-- Canlı Sekme Başlıkları -->
+                <div class="toolbar-tabs">
+                    <button class="tab-btn active" onclick="switchToolbarTab('tab-metin')"><i class="fa-solid fa-pen-nib"></i> Metin Düzeni</button>
+                    <button class="tab-btn" onclick="switchToolbarTab('tab-araclar')"><i class="fa-solid fa-puzzle-piece"></i> Ekle & Araçlar</button>
+                    <button class="tab-btn" onclick="switchToolbarTab('tab-kurumsal')"><i class="fa-solid fa-building-flag"></i> Kurumsal Kimlik</button>
+                </div>
+                <!-- 1. SEKME: METİN DÜZENİ -->
+                <div id="tab-metin" class="toolbar-content active-tab">
+                    
+                    <div class="btn-group">
+                        <button class="modern-btn" onclick="formatText('undo')" title="Geri Al"><i class="fa-solid fa-rotate-left" style="color: #e67e22;"></i></button>
+                        <button class="modern-btn" onclick="formatText('redo')" title="İleri Al"><i class="fa-solid fa-rotate-right" style="color: #e67e22;"></i></button>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="modern-btn" onclick="formatText('removeFormat')" title="Biçimi Temizle"><i class="fa-solid fa-eraser" style="color: #e74c3c;"></i></button>
+                        <select class="modern-btn" id="lineHeightSelect" onchange="changeLineHeight(this.value)" title="Satır Aralığı" style="font-size: 13px; height: 100%; outline: none;">
+                            <option value="">Satır ↕</option>
+                            <option value="1.0">1.0 (Tek)</option>
+                            <option value="1.15">1.15 (Normal)</option>
+                            <option value="1.5">1.5 (Geniş)</option>
+                            <option value="2.0">2.0 (Çift)</option>
+                        </select>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="modern-btn" onclick="changeFontSize('increase')" title="Yazı Büyüt"><i class="fa-solid fa-font" style="color: #27ae60;"></i><i class="fa-solid fa-arrow-up" style="font-size: 9px; margin-left: 2px;"></i></button>
+                        <button class="modern-btn" onclick="changeFontSize('decrease')" title="Yazı Küçült"><i class="fa-solid fa-font" style="color: #d35400;"></i><i class="fa-solid fa-arrow-down" style="font-size: 9px; margin-left: 2px;"></i></button>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="modern-btn" onclick="formatText('bold')" title="Kalın"><i class="fa-solid fa-bold"></i></button>
+                        <button class="modern-btn" onclick="formatText('italic')" title="İtalik"><i class="fa-solid fa-italic"></i></button>
+                        <button class="modern-btn" onclick="formatText('underline')" title="Altı Çizili"><i class="fa-solid fa-underline"></i></button>
+                    </div>
+
+                    <div class="btn-group">
+                        <label class="modern-btn" title="Yazı Rengi Seç" style="display: flex; gap: 5px; cursor: pointer;">
+                            <i class="fa-solid fa-palette" style="color: #c0392b;"></i>
+                            <input type="color" oninput="formatTextParam('foreColor', this.value)" style="width: 15px; height: 18px; border: none; padding: 0; background: transparent; cursor: pointer;">
+                        </label>
+                        <label class="modern-btn" title="Fosforlu Kalem" style="display: flex; gap: 5px; cursor: pointer;">
+                            <i class="fa-solid fa-highlighter" style="color: #f1c40f;"></i>
+                            <input type="color" oninput="formatTextParam('hiliteColor', this.value)" style="width: 15px; height: 18px; border: none; padding: 0; background: transparent; cursor: pointer;">
+                        </label>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="modern-btn" onclick="formatText('justifyLeft')" title="Sola Hizala"><i class="fa-solid fa-align-left"></i></button>
+                        <button class="modern-btn" onclick="formatText('justifyCenter')" title="Ortala"><i class="fa-solid fa-align-center"></i></button>
+                        <button class="modern-btn" onclick="formatText('justifyRight')" title="Sağa Hizala"><i class="fa-solid fa-align-right"></i></button>
+                        <button class="modern-btn" onclick="customJustify()" title="İki Yana Yasla"><i class="fa-solid fa-align-justify"></i></button>
+                        <button class="modern-btn" onclick="formatText('insertUnorderedList')" title="Madde İşaretleri"><i class="fa-solid fa-list-ul"></i></button>
+                    </div>
+                </div>
+
+               <!-- 2. SEKME: EKLE & ARAÇLAR -->
+                <div id="tab-araclar" class="toolbar-content" style="flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 8px;">
+                    <div class="btn-group" style="flex-shrink: 0;">
+                        <button class="modern-btn" onclick="insertNewTable()" title="Sıfırdan Yeni Tablo"><i class="fa-solid fa-table-cells" style="color: #16a085;"></i> &nbsp;Yeni</button>
+                        <button class="modern-btn" onclick="addTableRow()" title="Alt Satır Ekle"><i class="fa-solid fa-table" style="color: #1abc9c;"></i><i class="fa-solid fa-plus" style="font-size: 9px; margin-left:2px; margin-right: 5px;"></i> Satır</button>
+                        <button class="modern-btn" onclick="deleteTableRow()" title="Satırı Sil"><i class="fa-solid fa-table" style="color: #e74c3c;"></i><i class="fa-solid fa-minus" style="font-size: 9px; margin-left:2px; margin-right: 5px;"></i> Satır</button>
+                        <button class="modern-btn" onclick="adjustColumnWidth()" title="Sütun Genişliği Ayarla"><i class="fa-solid fa-arrows-left-right" style="color: #2980b9;"></i> &nbsp;Sütun</button>
+                        <button class="modern-btn" onclick="adjustRowHeight()" title="Satır Yüksekliği Ayarla"><i class="fa-solid fa-arrows-up-down" style="color: #2980b9;"></i> &nbsp;Yükseklik</button>
+                    </div>
+
+                    <div class="btn-group" style="flex-shrink: 0;">
+                        <button class="modern-btn" onclick="insertQRCode()" title="Dinamik QR Kod Ekle"><i class="fa-solid fa-qrcode" style="color: #25D366;"></i> &nbsp;QR Kod</button>
+                        <button class="modern-btn" onclick="document.getElementById('imageUploader').click()" title="Logo veya Fotoğraf Ekle"><i class="fa-solid fa-image" style="color: #f39c12;"></i> &nbsp;Görsel Ekle</button>
+                    </div>
+
+                  <div class="btn-group" style="flex-shrink: 0;">
+                        <button class="modern-btn btn-action" style="background: #fdedf0; color: #e74c3c;" onclick="insertPageBreak()" title="Sayfayı Buradan Böl (Yazıcıda Yeni Sayfaya Geçer)"><i class="fa-solid fa-scissors"></i> Sayfayı Böl</button>
+                        <button class="modern-btn btn-action" style="background: #f5eef8; color: #8e44ad;" onclick="openLegalModal()" title="Hukuki Kalıp Cümle Kütüphanesini Aç"><i class="fa-solid fa-scale-balanced"></i> Hukuki Madde Ekle</button>
+                        <button class="modern-btn btn-action" style="background: #eafaf1; color: #27ae60;" onclick="insertPageNumber()" title="Sayfa Numarası Ekle (Sağa Dayalı)"><i class="fa-solid fa-file-lines"></i> Sayfa No Ekle</button>
+                    </div>
+                </div>
+                
+                <!-- 3. SEKME: GELİŞMİŞ KURUMSAL KİMLİK KONTROL PANELİ -->
+                <div id="tab-kurumsal" class="toolbar-content" style="flex-wrap: wrap; gap: 10px; justify-content: flex-start; padding-bottom: 8px;">
+                    <div class="btn-group" style="flex-shrink: 0; align-items: center;">
+                        <button class="modern-btn" onclick="document.getElementById('headerLogoUploader').click()" title="Logo Yükle" style="color: #2980b9;">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Logo Seç
+                        </button>
+                        <span id="headerLogoStatus" style="font-size: 11px; color: #27ae60; font-weight: bold; margin-right: 5px; display: none;"><i class="fa-solid fa-check"></i> Seçildi</span>
+                    </div>
+
+                    <div class="btn-group" style="flex-shrink: 0; display: flex; align-items: center; gap: 5px;">
+                        <input type="color" id="headerBgColor" value="#2c3e50" title="Arka Plan Rengi" style="width: 25px; height: 25px; border: none; cursor: pointer;">
+                        <input type="color" id="headerTextColor" value="#ffffff" title="Yazı Rengi" style="width: 25px; height: 25px; border: none; cursor: pointer;">
+                        
+                        <select id="headerLayout" class="modern-btn" style="padding: 2px 5px;" title="Yerleşim Planı">
+                            <option value="logo-left-text-right">Logo Solda / Unvan Sağda</option>
+                            <option value="logo-right-text-left">Logo Sağda / Unvan Solda</option>
+                            <option value="logo-left-text-center">Logo Solda / Unvan Ortada</option>
+                            <option value="logo-right-text-center">Logo Sağda / Unvan Ortada</option>
+                            <option value="center-all">Her İkisi Ortada (Altlı Üstlü)</option>
+                        </select>
+                        
+                        <!-- YENİ EKLENEN YAZI TİPİ (FONT) MENÜSÜ -->
+                        <select id="headerFontFamily" class="modern-btn" style="padding: 2px 5px;" title="Yazı Tipi">
+                            <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" selected>Modern (Segoe UI)</option>
+                            <option value="'Times New Roman', Times, serif">Resmi (Times New Roman)</option>
+                            <option value="Arial, Helvetica, sans-serif">Kurumsal (Arial)</option>
+                            <option value="Georgia, serif">Zarif (Georgia)</option>
+                        </select>
+                    </div>
+
+                   <div class="btn-group" style="flex-shrink: 0; display: flex; align-items: center; gap: 5px;">
+                        <select id="headerHeight" class="modern-btn" style="padding: 2px 5px;" title="Şerit Yüksekliği">
+                            <option value="60px">Şerit: İnce</option>
+                            <option value="85px" selected>Şerit: Normal</option>
+                            <option value="120px">Şerit: Kalın</option>
+                        </select>
+                        <select id="headerLogoSize" class="modern-btn" style="padding: 2px 5px;" title="Logo Boyutu">
+                            <option value="50%">Logo: Küçük</option>
+                            <option value="75%" selected>Logo: Normal</option>
+                            <option value="100%">Logo: Büyük</option>
+                        </select>
+                        <select id="headerFontSize" class="modern-btn" style="padding: 2px 5px;" title="Yazı Boyutu">
+                            <option value="14px">Yazı: Küçük (14px)</option>
+                            <option value="16px" selected>Yazı: Normal (16px)</option>
+                            <option value="20px">Yazı: Büyük (20px)</option>
+                            <option value="24px">Yazı: Çok Büyük</option>
+                        </select>
+                        <!-- YENİ EKLENEN İLETİŞİM & YETKİ SEÇENEĞİ -->
+                        <select id="headerContactInfo" class="modern-btn" style="padding: 2px 5px;" title="Alt Bilgi (İletişim & Yetki)">
+                            <option value="gizle" selected>Alt Bilgi: Gizle</option>
+                            <option value="goster">Alt Bilgi: Göster</option>
+                        </select>
+                    </div>
+
+                    <div class="btn-group" style="flex-shrink: 0; gap: 5px;">
+                        <button class="modern-btn btn-action" style="background: #27ae60; color: white;" onclick="insertCorporateHeader()">
+                            <i class="fa-solid fa-flag"></i> Uygula / Güncelle
+                        </button>
+                        <button class="modern-btn btn-action" style="background: #e74c3c; color: white; padding: 5px 10px;" onclick="removeCorporateHeader()" title="Anteti Kağıttan Temizle">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Gizli Yükleyiciler -->
+                <input type="file" id="imageUploader" accept="image/*" style="display:none;" onchange="insertImage(event)">
+                <input type="file" id="headerLogoUploader" accept="image/*" style="display:none;" onchange="handleHeaderLogoUpload(event)">
+            </div>
+
+            <div class="a4-paper" id="a4Document" contenteditable="true">
+                <!-- Belge buraya çizilecek -->
+            </div>
+        </div>
+    </div>
+
+<!-- HUKUKİ KALIP CÜMLELER PENCERESİ -->
+    <div class="guide-modal-overlay" id="legalModal" onclick="closeLegalModal(event)">
+        <div class="guide-modal-content" onclick="event.stopPropagation()">
+            <button class="guide-modal-close" onclick="closeLegalModal()"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="color: #2c3e50; margin-bottom: 5px; text-align: center;"><i class="fa-solid fa-scale-balanced"></i> Hukuki Madde Kütüphanesi</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 13px; margin-bottom: 20px;">Sözleşmeye eklemek istediğiniz maddenin yanındaki "Ekle" butonuna basın.</p>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="newLegalClause" placeholder="Yeni bir hukuki şart / madde yazın..." style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
+                <button class="btn" style="background: #27ae60; color: white; min-width: 80px;" onclick="addLegalClause()"><i class="fa-solid fa-plus"></i> Kaydet</button>
+            </div>
+
+            <div id="legalListContainer" style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; background: #f9f9f9; padding: 10px;">
+                <!-- Maddeler buraya gelecek -->
+            </div>
+        </div>
+    </div>
+
+<!-- KILAVUZ PENCERESİ HTML -->
+    <div class="guide-modal-overlay" id="guideModal" onclick="closeGuideModal(event)">
+        <div class="guide-modal-content" onclick="event.stopPropagation()">
+            <button class="guide-modal-close" onclick="closeGuideModal()"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="color: #2c3e50; margin-bottom: 5px; text-align: center;"><i class="fa-solid fa-book-open"></i> EPA Akıllı Form Kullanım Kılavuzu</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 13px; margin-bottom: 30px;">Bu sistem, sözleşme ve evraklarınızı hızlıca doldurmanız, arşivlemeniz ve yönetmeniz için tasarlanmıştır.</p>
+
+            <div class="guide-section">
+                <h4>1. Akıllı Etiket (Dinamik Kutu) Nasıl Eklenir?</h4>
+                <p>Metin içerisine sonradan doldurulacak bir bilgi alanı eklemek istiyorsanız, bu kelimeyi <b>Köşeli Parantez</b> içinde, <b>Tamamı Büyük Harf</b> ve <b>İNGİLİZCE karakter</b> olacak şekilde yazmalısınız. Boşluk yerine alt tire ( _ ) kullanmalısınız.</p>
+                <p><b>Doğru Kullanımlar:</b> <span class="guide-tag-example">[MUSTERI_AD]</span> , <span class="guide-tag-example">[KIRA_BEDELI]</span> , <span class="guide-tag-example">[ADA_PARSEL_NO]</span></p>
+                <p><b>Yanlış Kullanımlar:</b> [MÜŞTERİ ADI] , [Satış_bedeli] , [tarih]</p>
+                <p><i>İpucu:</i> Şablonunuzu kaydettiğinizde, yazdığınız bu etiketler sol menüde otomatik olarak doldurulabilir metin kutularına dönüşecektir.</p>
+            </div>
+
+            <div class="guide-section">
+                <h4>2. Yapay Zeka (AI) ile Yeni Sözleşme Ekleme Prosedürü</h4>
+                <p>Elinizdeki düz bir sözleşme metnini sisteme kusursuz entegre etmek için şu adımları izleyin:</p>
+                <p><b>Adım 1:</b> Sol menüdeki turuncu <b>"AI Şablon Promptu"</b> butonuna tıklayın (Yapay zekaya verilecek komut kopyalanır).</p>
+                <p><b>Adım 2:</b> ChatGPT veya benzeri bir yapay zeka aracını açın. Kopyaladığınız komutu yapıştırın ve en altına elinizdeki sözleşme metnini ekleyip gönderin.</p>
+                <p><b>Adım 3:</b> Yapay zekanın size verdiği HTML kodunu kopyalayın.</p>
+                <p><b>Adım 4:</b> EPA sisteminde <b>"Yeni Şablon"</b> butonuna tıklayın, şablona bir isim verin ve kopyaladığınız HTML kodunu yapıştırın. Sistem evrakı otomatik tanıyacaktır.</p>
+            </div>
+
+            <div class="guide-section">
+                <h4>3. Programa Özgü Temel Fonksiyonlar</h4>
+                <p><b><i class="fa-solid fa-save"></i> Güncelle:</b> Ekranda yazıyı kalınlaştırma, tablo ekleme veya yeni etiket ekleme gibi tasarımsal değişiklikler yaptığınızda bu butona basarak şablonun kalıcı olarak güncellenmesini sağlarsınız.</p>
+                <p><b><i class="fa-solid fa-file-shield"></i> Arşive Kaydet:</b> Doldurduğunuz formu bir müşteri adına kaydeder. Sol alttaki listeden eski kayıtlara ulaşabilirsiniz.</p>
+                <p><b>Arşiv Görüntüleme:</b> Eski bir arşiv kaydını açtığınızda sol menü kilitlenir. Değişiklik yapmak isterseniz, sağ taraftaki kağıt üzerinden doğrudan tıklayarak (Word gibi) yazıları değiştirebilirsiniz.</p>
+                <p><b><i class="fa-solid fa-print"></i> Yazdır / PDF:</b> Belgeyi yazdırırken menüler otomatik gizlenir, sadece A4 kağıdınız tertemiz şekilde PDF'e dönüştürülür.</p>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn" style="background: #2c3e50; color: white; padding: 10px 30px; font-size: 14px;" onclick="closeGuideModal()">Anladım, Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FİRMA AYARLARI PENCERESİ HTML -->
+    <div class="guide-modal-overlay" id="companyModal" onclick="closeCompanyModal(event)">
+        <div class="guide-modal-content" style="width: 500px;" onclick="event.stopPropagation()">
+            <button class="guide-modal-close" onclick="closeCompanyModal()"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="color: #2c3e50; margin-bottom: 5px; text-align: center;"><i class="fa-solid fa-building"></i> Firma Bilgilerim</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 13px; margin-bottom: 20px;">Sabit bilgilerinizi bir kez kaydedin, akıllı formlara otomatik yansısın.</p>
+            
+            <div class="form-group"><label>Ticari Unvanı (Örn: Obudur Teknoloji A.Ş.)</label><input type="text" id="comp_unvan" style="border: 1px solid #3498db;"></div>
+            <div class="form-group"><label>Yetki Belgesi Numarası</label><input type="text" id="comp_yetki" style="border: 1px solid #3498db;"></div>
+            <div class="form-group"><label>Adresi</label><input type="text" id="comp_adres" style="border: 1px solid #3498db;"></div>
+            <div class="form-group"><label>Vergi Dairesi ve Numarası</label><input type="text" id="comp_vergi" style="border: 1px solid #3498db;"></div>
+            <div class="form-group"><label>Telefon</label><input type="text" id="comp_telefon" style="border: 1px solid #3498db;"></div>
+            <div class="form-group"><label>E-Posta Adresi</label><input type="text" id="comp_eposta" style="border: 1px solid #3498db;"></div>
+            <div class="form-group"><label>Sorumlu Emlak Danışmanı / Yetkili</label><input type="text" id="comp_yetkili" style="border: 1px solid #3498db;"></div>
+            <div class="form-group"><label>Yetkili Mahkeme (Örn: Antalya)</label><input type="text" id="comp_mahkeme" style="border: 1px solid #3498db;"></div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn" style="background: #27ae60; color: white; padding: 10px 30px; font-size: 14px; width: 100%;" onclick="saveCompanyProfile()"><i class="fa-solid fa-save"></i> Bilgilerimi Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+      // AKILLI ENTER TUŞU YAMASI (YENİ)
+        document.addEventListener('DOMContentLoaded', function() {
+            const editor = document.getElementById('a4Document');
+            editor.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    const selection = window.getSelection();
+                    if (!selection.rangeCount) return;
+                    
+                    let node = selection.anchorNode;
+                    let protectStructure = false;
+                    
+                    // İmlecin tablo (TABLE/TD) veya imza (FLEX) alanında olup olmadığını kontrol et
+                    while (node && node !== editor) {
+                        if (node.nodeName === 'TABLE' || node.nodeName === 'TD' || node.nodeName === 'TH') {
+                            protectStructure = true;
+                            break;
+                        }
+                        if (node.style && node.style.display === 'flex') {
+                            protectStructure = true;
+                            break;
+                        }
+                        node = node.parentNode;
+                    }
+                    
+                    // Eğer hassas bir alandaysa (tablo veya imza içi) yapının ikiye bölünmesini engelle
+                    if (protectStructure) {
+                        e.preventDefault();
+                        document.execCommand('insertLineBreak');
+                    }
+                    // EĞER boşlukta veya normal metindeyse HİÇBİR ŞEY YAPMA! 
+                    // Tarayıcı doğal olarak Enter'ı algılasın ve aşağıdaki blokları aşağı itsin.
+                }
+            });
+        });
+        // SATIR ARALIĞI DEĞİŞTİRME FONKSİYONU
+        function changeLineHeight(val) {
+            if (!val) return;
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            let node = selection.anchorNode;
+            if (!node) return;
+            if (node.nodeType === 3) node = node.parentNode;
+            const editor = document.getElementById('a4Document');
+            while (node && node !== editor) {
+                if (node.style) {
+                    node.style.lineHeight = val;
+                    break;
+                }
+                node = node.parentNode;
+            }
+            if (node === editor) {
+                document.execCommand('formatBlock', false, 'div');
+                const selectionDiv = selection.anchorNode.parentNode;
+                if(selectionDiv && selectionDiv.style) {
+                    selectionDiv.style.lineHeight = val;
+                }
+            }
+            document.getElementById('lineHeightSelect').value = '';
+        }
+
+        // GÜNCELLEME: Varsayılan şablonların en sonuna tıklama kolaylığı için <br><br><br> eklendi.
+        const defaultTemplates = {
+            "satis_yetkilendirme": {
+                ad: "Taşınmazın Satılması İçin Yetkilendirme Sözleşmesi",
+                icerik: `
+<h3 style="text-align: center;">TAŞINMAZIN SATILMASI İÇİN YETKİLENDİRME SÖZLEŞMESİ</h3>
+<br>
+<b>MADDE 1: Sözleşmenin Tarafları</b><br>
+İşbu sözleşme aşağıda bilgileri yazılı MÜLK SAHİBİ ile İŞLETME arasında <b>[SOZLESME_TARIHI]</b> tarihinde ANTALYA ilinde imzalanmıştır.<br><br>
+
+<b>İşletmenin;</b><br>
+Ticari Unvanı: OZKAR Gayrimenkul<br>
+Telefon: 0541 3493535<br><br>
+
+<b>Mülk Sahibinin;</b><br>
+Adı Soyadı / Unvanı: <b>[MULK_SAHIBI_AD]</b><br>
+T.C. No / Vergi Kimlik No: [MULK_SAHIBI_TC]<br>
+Telefon Numarası: [MULK_SAHIBI_TELEFON]<br>
+Adresi: [MULK_SAHIBI_ADRES]<br><br>
+
+<b>MADDE 2: Sözleşmenin Süresi</b><br>
+İşbu sözleşme <b>[SOZLESME_BASLANGIC]</b> - <b>[SOZLESME_BITIS]</b> tarihleri arasında geçerlidir. Fesheden taraf haklı sebebin varlığını ispatla yükümlüdür.<br><br>
+
+<b>MADDE 4: Satış Bilgileri ve Hizmet Bedeli</b><br>
+Gayrimenkulün gerçek satış bedeli <b>[SATIS_BEDELI] TL</b> olup İşletme bu bedel üzerinden pazarlama faaliyetini yürütecektir. İşletme işbu sözleşmede belirlenen gayrimenkulün satış bedelinin <b>%2'si (yüzde iki) + KDV</b> oranında hizmet bedeline hak kazanır.<br><br>
+
+<b>GAYRİMENKUL BİLGİLERİ</b><br>
+İl / İlçe / Mahalle: [IL_ILCE_MAHALLE]<br>
+Ada / Parsel: [ADA_PARSEL]<br>
+Gayrimenkul Niteliği: [GAYRIMENKUL_NITELIGI]<br><br>
+
+<div style="display: flex; justify-content: space-between; margin-top: 40px; text-align: center;">
+    <div><b>MÜLK SAHİBİ</b><br>[MULK_SAHIBI_AD]<br>İmza</div>
+    <div><b>İŞLETME</b><br>OZKAR Gayrimenkul<br>Kaşe / İmza</div>
+</div><br><br><br>`
+            },
+            
+            "kiralama_yetkilendirme": {
+                ad: "Taşınmazın Kiralanması İçin Yetkilendirme Sözleşmesi",
+                icerik: `
+<h3 style="text-align: center;">TAŞINMAZIN KİRALANMASI İÇİN YETKİLENDİRME SÖZLEŞMESİ</h3>
+<br>
+<b>MADDE 1: Sözleşmenin Tarafları</b><br>
+İşbu sözleşme aşağıda bilgileri yazılı MÜLK SAHİBİ ile İŞLETME arasında <b>[SOZLESME_TARIHI]</b> tarihinde ANTALYA ilinde imzalanmıştır.<br><br>
+
+<b>İşletmenin;</b><br>
+Ticari Unvanı: OZKAR Gayrimenkul<br>
+Telefon: 0541 3493535<br><br>
+
+<b>Mülk Sahibinin;</b><br>
+Adı Soyadı / Unvanı: <b>[MULK_SAHIBI_AD]</b><br>
+T.C. No / Vergi Kimlik No: [MULK_SAHIBI_TC]<br>
+Telefon Numarası: [MULK_SAHIBI_TELEFON]<br><br>
+
+<b>MADDE 2: Sözleşmenin Süresi</b><br>
+İşbu sözleşme <b>[SOZLESME_BASLANGIC]</b> - <b>[SOZLESME_BITIS]</b> tarihleri arasında geçerlidir. Mülk Sahibi bu süreden önce haklı sebep olmaksızın sözleşmeyi feshederse tekerrür olmamak kaydıyla İşletme'ye gayrimenkulün 1 (bir) aylık kira bedeli + KDV tutarında cezai şart ödemekle yükümlüdür.<br><br>
+
+<b>MADDE 4: Satış Bilgileri ve Hizmet Bedeli</b><br>
+Gayrimenkulün 1 (bir) aylık/yıllık kira bedeli <b>[KIRA_BEDELI] TL</b> olup İşletme bu bedel üzerinden pazarlama faaliyetini yürütecektir. İşletme gayrimenkulün 1 (bir) aylık kira bedeli + KDV oranında hizmet bedeline hak kazanır.<br><br>
+
+<b>GAYRİMENKUL BİLGİLERİ</b><br>
+Adres: [IL_ILCE_MAHALLE]<br>
+Ada / Parsel: [ADA_PARSEL]<br><br>
+
+<div style="display: flex; justify-content: space-between; margin-top: 40px; text-align: center;">
+    <div><b>MÜLK SAHİBİ</b><br>[MULK_SAHIBI_AD]<br>İmza</div>
+    <div><b>İŞLETME</b><br>OZKAR Gayrimenkul<br>Kaşe / İmza</div>
+</div><br><br><br>`
+            }
+        };
+        
+        let epaTemplates = JSON.parse(localStorage.getItem('epa_custom_templates')) || defaultTemplates;
+        let currentInputValues = {};
+        
+        // FİRMA PROFİLİ HAFIZASI
+        let companyProfile = JSON.parse(localStorage.getItem('epa_company_profile')) || {};
+
+        window.onload = function() {
+            let hasCorruptedData = false;
+            for (let key in epaTemplates) {
+                if (typeof epaTemplates[key] !== 'object' || !epaTemplates[key].ad) {
+                    delete epaTemplates[key];
+                    hasCorruptedData = true;
+                }
+            }
+            if (hasCorruptedData) {
+                localStorage.setItem('epa_custom_templates', JSON.stringify(epaTemplates));
+            }
+
+            refreshTemplateDropdown();
+            refreshArchiveList();
+
+            document.getElementById('a4Document').addEventListener('click', function(e) {
+                if (e.target && e.target.nodeName === 'IMG') {
+                    resizeImage(e.target);
+                }
+            });
+        };
+
+        function refreshTemplateDropdown(preserveKey = null) {
+            const selector = document.getElementById('templateSelector');
+            const currentKey = preserveKey || selector.value;
+            selector.innerHTML = '';
+            for (const key in epaTemplates) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.innerText = epaTemplates[key].ad;
+                selector.appendChild(opt);
+            }
+            if (currentKey && epaTemplates[currentKey]) {
+                selector.value = currentKey;
+            }
+            loadTemplate();
+        }
+       function loadTemplate() {
+            const selectedKey = document.getElementById('templateSelector').value;
+            if(!epaTemplates[selectedKey]) return;
+            
+            let rawTemplate = epaTemplates[selectedKey].icerik;
+            const tagRegex = /\[([A-Z0-9_ğüşöçİĞÜŞÖÇ\s]+)\]/g;
+            const foundTags = [...new Set(rawTemplate.match(tagRegex))]; 
+
+            const inputContainer = document.getElementById('dynamicInputsContainer');
+            inputContainer.innerHTML = ''; 
+
+            if(foundTags.length > 0) {
+                foundTags.forEach(tagWithBrackets => {
+                    const rawTag = tagWithBrackets.replace(/\[|\]/g, ''); 
+                    const labelName = rawTag.replace(/_/g, ' '); 
+
+                    const div = document.createElement('div');
+                    div.className = 'form-group';
+                    
+// OTOMATİK DOLDURMA (HAYALET YAZMAN) KONTROLÜ (GELİŞMİŞ AKILLI EŞLEŞTİRME)
+                    let autoFillValue = "";
+                    const tagUpper = rawTag.toUpperCase();
+                    
+                    // YENİ EKLENTİ: Sadece "ISLETME" kelimesi değil, "TICARI", "YETKI", "VERGI" gibi kelimeleri de ana firma olarak tanıyacak.
+                    let isIsletme = tagUpper.includes('ISLETME') || 
+                                    tagUpper.includes('TICARI_UNVAN') || 
+                                    tagUpper.includes('YETKI_BELGESI') || 
+                                    tagUpper.includes('VERGI_DAIRESI');
+                    
+                    // DİKKAT (NEGATİF FİLTRE): İçinde "SOZLESMELI" kelimesi geçen etiketlere (karşı tarafın firması) KESİNLİKLE dokunma!
+                    if (isIsletme && !tagUpper.includes('SOZLESMELI')) {
+                        if (companyProfile.unvan && tagUpper.includes('UNVAN')) autoFillValue = companyProfile.unvan;
+                        else if (companyProfile.yetki && tagUpper.includes('YETKI')) autoFillValue = companyProfile.yetki;
+                        else if (companyProfile.adres && tagUpper.includes('ADRES')) autoFillValue = companyProfile.adres;
+                        else if (companyProfile.vergi && tagUpper.includes('VERGI')) autoFillValue = companyProfile.vergi;
+                        else if (companyProfile.telefon && (tagUpper.includes('TELEFON') || tagUpper.includes('TEL'))) autoFillValue = companyProfile.telefon;
+                        else if (companyProfile.eposta && (tagUpper.includes('POSTA') || tagUpper.includes('MAIL'))) autoFillValue = companyProfile.eposta;
+                        else if (companyProfile.yetkili && (tagUpper.includes('DANI') || tagUpper.includes('YETKILI') || tagUpper.includes('TEMSILCI'))) autoFillValue = companyProfile.yetkili;
+                    }
+                    // Mahkeme etiketi her zaman işletme kelimesi içermeyebilir, onu ayrıca yakalıyoruz
+                    if (companyProfile.mahkeme && tagUpper.includes('MAHKEME')) autoFillValue = companyProfile.mahkeme;
+
+                    div.innerHTML = `
+                        <label>${labelName}</label>
+                        <input type="text" id="input_${rawTag}" value="${autoFillValue}" placeholder="${labelName} giriniz..." onkeyup="updateLivePreview()">
+                    `;
+                    inputContainer.appendChild(div);
+                    
+                    // Şablon yüklenirken etiketleri 1 kereliğine akıllı kutulara çeviriyoruz (Eğer otomatik doluysa içini dolu basıyoruz)
+                    let initialDisplay = autoFillValue ? autoFillValue : "........................................";
+                    const emptyPlaceholder = `<span class="dynamic-field" data-tagname="${rawTag}">${initialDisplay}</span>`;
+                    rawTemplate = rawTemplate.split(tagWithBrackets).join(emptyPlaceholder);
+                });
+            } else {
+                inputContainer.innerHTML = '<div style="padding:10px; color:#7f8c8d; font-size:12px; text-align:center;">Bu şablonda doldurulacak özel etiket bulunmuyor. Metni sağ taraftan doğrudan düzenleyebilirsiniz.</div>';
+            }
+
+            // KAĞIDI SADECE ŞABLON SEÇİLDİĞİNDE ÇİZ (Yıkıp yeniden yapmayı engeller)
+            document.getElementById('a4Document').innerHTML = rawTemplate;
+
+            currentInputValues = {};
+            updateLivePreview();
+        }
+
+        function updateLivePreview() {
+            const inputs = document.querySelectorAll('#dynamicInputsContainer input');
+            
+            inputs.forEach(input => {
+                const rawTag = input.id.replace('input_', '');
+                let valueToInsert = input.value.trim();
+                
+                const spans = document.getElementById('a4Document').querySelectorAll(`span[data-tagname="${rawTag}"]`);
+                
+                if(valueToInsert === "") {
+                    // SOL PANEL: Kutu Boş Durumu (Soft Sarı Uyarı)
+                    input.style.backgroundColor = "#fff3cd";
+                    input.style.borderColor = "#ffe69c";
+                    
+                    // SAĞ PANEL (A4): Eksik Bilgi Fosforlu Uyarı
+                    valueToInsert = "........................................";
+                    spans.forEach(span => {
+                        span.innerText = valueToInsert;
+                        span.style.backgroundColor = "#fff3cd"; 
+                        span.style.color = "#d35400"; // Turuncu/Kırmızımsı dikkat çekici yazı
+                        span.style.fontWeight = "bold";
+                        span.style.borderRadius = "3px";
+                    });
+                } else {
+                    // SOL PANEL: Kutu Dolu Durumu (Ferah Açık Yeşil Onay)
+                    input.style.backgroundColor = "#f0fdf4"; 
+                    input.style.borderColor = "#bbf7d0";
+                    
+                    // SAĞ PANEL (A4): Dolu Bilgi (Şeffaf, Normal Metin Gibi)
+                    spans.forEach(span => {
+                        span.innerText = valueToInsert;
+                        span.style.backgroundColor = "transparent"; 
+                        span.style.color = "inherit"; // Belgenin normal yazısıyla kusursuz bütünleşir
+                        span.style.fontWeight = "bold"; // Doldurulan verilerin belli olması için kalın kalır
+                    });
+                }
+            });
+        }
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            document.getElementById('a4Document').focus();
+        }
+
+        function formatTextParam(command, value) {
+            document.execCommand(command, false, value);
+            document.getElementById('a4Document').focus();
+        }
+
+        let currentFontSize = 3; 
+        function changeFontSize(action) {
+            if (action === 'increase' && currentFontSize < 7) {
+                currentFontSize++;
+            } else if (action === 'decrease' && currentFontSize > 1) {
+                currentFontSize--;
+            }
+            document.execCommand('fontSize', false, currentFontSize);
+            document.getElementById('a4Document').focus();
+        }
+
+       function insertNewTable() {
+            let cols = prompt("Tabloda kaç SÜTUN olsun?", "2");
+            if (!cols || isNaN(cols) || cols <= 0) return;
+            
+            let rows = prompt("Tabloda kaç SATIR olsun?", "3");
+            if (!rows || isNaN(rows) || rows <= 0) return;
+
+            let tableHTML = '<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;"><tbody>';
+            
+            for (let i = 0; i < rows; i++) {
+                tableHTML += '<tr>';
+                for (let j = 0; j < cols; j++) {
+                    if (i === 0) {
+                        // İlk satır başlık tasarımı (Gri arka plan, kalın yazı)
+                        tableHTML += '<td style="background-color: #f8f9fa; border: 1px solid #bdc3c7; padding: 8px 12px;"><b>Başlık</b></td>';
+                    } else {
+                        // Diğer satırlar normal tasarım
+                        tableHTML += '<td style="border: 1px solid #bdc3c7; padding: 8px 12px;"><br></td>';
+                    }
+                }
+                tableHTML += '</tr>';
+            }
+            
+            // Tablonun altına farenin tıklayabileceği bir boşluk bırakıyoruz ki cursor kilitlenmesin
+            tableHTML += '</tbody></table><div><br></div>'; 
+
+            document.getElementById('a4Document').focus();
+            document.execCommand('insertHTML', false, tableHTML);
+        }
+
+        function addTableRow() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                let currentNode = selection.anchorNode;
+                while (currentNode && currentNode.nodeName !== 'TR' && currentNode.nodeName !== 'BODY') {
+                    currentNode = currentNode.parentNode;
+                }
+                if (currentNode && currentNode.nodeName === 'TR') {
+                    const newRow = currentNode.cloneNode(true);
+                    for (let cell of newRow.cells) {
+                        cell.innerHTML = '&nbsp;'; 
+                    }
+                    currentNode.parentNode.insertBefore(newRow, currentNode.nextSibling);
+                } else {
+                    alert("Lütfen önce tablo içinde yeni satır eklemek istediğiniz yere tıklayın.");
+                }
+            }
+        }
+function deleteTableRow() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                let currentNode = selection.anchorNode;
+                while (currentNode && currentNode.nodeName !== 'TR' && currentNode.nodeName !== 'BODY') {
+                    currentNode = currentNode.parentNode;
+                }
+                if (currentNode && currentNode.nodeName === 'TR') {
+                    if (confirm("Seçili tablo satırını tamamen silmek istediğinize emin misiniz?")) {
+                        currentNode.parentNode.removeChild(currentNode);
+                    }
+                } else {
+                    alert("Lütfen silmek istediğiniz tablo satırına tıklayın.");
+                }
+            }
+        }
+
+        function adjustColumnWidth() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                let node = selection.anchorNode;
+                while (node && node.nodeName !== 'TD' && node.nodeName !== 'TH' && node.nodeName !== 'BODY') {
+                    node = node.parentNode;
+                }
+                if (node && (node.nodeName === 'TD' || node.nodeName === 'TH')) {
+                    let currentWidth = node.style.width || "";
+                    let userInput = prompt("Sütun genişliğini girin:\n(Örn: 30, 50, 150. Yüzdelik için sonuna % ekleyin, aksi halde piksel sayılır)", currentWidth.replace('%', '').replace('px', ''));
+                    
+                    if (userInput !== null && userInput.trim() !== "") {
+                        let finalWidth = userInput.trim();
+                        if (!finalWidth.endsWith('%') && !finalWidth.endsWith('px')) {
+                            // Eğer sadece rakam girilmişse (Örn: 40) bunu yüzde kabul et. (100'den büyükse px kabul et)
+                            if (parseInt(finalWidth) <= 100) finalWidth += "%";
+                            else finalWidth += "px";
+                        }
+                        node.style.width = finalWidth;
+                    }
+                } else {
+                    alert("Lütfen önce genişliğini değiştirmek istediğiniz tablo sütununa (hücreye) tıklayın.");
+                }
+            }
+        }
+
+        function adjustRowHeight() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                let node = selection.anchorNode;
+                while (node && node.nodeName !== 'TD' && node.nodeName !== 'TH' && node.nodeName !== 'BODY') {
+                    node = node.parentNode;
+                }
+                if (node && (node.nodeName === 'TD' || node.nodeName === 'TH')) {
+                    let currentPadding = node.style.paddingTop || "8px";
+                    let userInput = prompt("Satır yüksekliğini (iç boşluğu) artırmak için bir değer girin:\n(Örn: 10, 15, 25)", currentPadding.replace('px', '').trim());
+                    
+                    if (userInput !== null && userInput.trim() !== "") {
+                        let finalPadding = userInput.trim();
+                        if (!finalPadding.endsWith('px')) finalPadding += "px";
+                        
+                        // Satırdaki tüm hücrelere uygula ki tablo düzgün görünsün
+                        let row = node.parentNode;
+                        for (let cell of row.cells) {
+                            cell.style.paddingTop = finalPadding;
+                            cell.style.paddingBottom = finalPadding;
+                        }
+                    }
+                } else {
+                    alert("Lütfen önce yüksekliğini değiştirmek istediğiniz tablo satırına (hücreye) tıklayın.");
+                }
+            }
+        }
+        function insertImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+                const imgHTML = `<img src="${base64Image}" style="max-width: 100%; width: 150px; cursor: pointer; margin: 5px;" title="Boyutunu ayarlamak için tıklayın">`;
+                document.execCommand('insertHTML', false, imgHTML);
+            };
+            reader.readAsDataURL(file); 
+            event.target.value = '';
+        }
+
+        function resizeImage(imgElement) {
+            let currentWidth = imgElement.style.width || "150px";
+            let numericWidth = currentWidth.replace('px', '').replace('%', '').trim();
+
+            const userInput = prompt("Görsel genişliğini girin (Sadece rakam girmeniz yeterlidir, örn: 200, 350):", numericWidth);
+            
+            if (userInput !== null && userInput.trim() !== "") {
+                let finalWidth = userInput.trim();
+                if (!finalWidth.endsWith('px') && !finalWidth.endsWith('%')) {
+                    finalWidth = finalWidth + "px";
+                }
+                imgElement.style.width = finalWidth;
+            }
+        }
+
+        function insertPageBreak() {
+            const breakHTML = `<br><div class="page-break-indicator" contenteditable="false">✂️ ------- YENİ SAYFA (PDF ÇIKTISINDA BURADAN SONRASI YENİ SAYFAYA GEÇER) ------- ✂️</div>`;
+            document.execCommand('insertHTML', false, breakHTML);
+            document.getElementById('a4Document').focus();
+        }
+
+      function addNewTemplate() {
+            const templateName = prompt("Yeni Şablonun Adı Ne Olsun? (Örn: Tutanak)");
+            if (!templateName) return;
+
+            let templateContent = prompt("Sözleşme metnini buraya yapıştırın:\n(Değişecek yerlere [ALICI_ADI] gibi etiketler koyabilirsiniz)");
+            if (!templateContent) return;
+
+            // OTOMATİK DÜZELTİCİ 1: Yapay zekanın unuttuğu kapatma parantezlerini onarır (Örn: [ETIKET -> [ETIKET])
+            templateContent = templateContent.replace(/\[([A-Z_]+)(?![A-Z_\]])/g, "[$1]");
+
+            // OTOMATİK DÜZELTİCİ 2: İçinde[cite: 5] veya<]*\]?/gi, "");
+
+            const templateId = "sablon_" + Date.now();
+            // GÜNCELLEME: Yeni eklenen şablonların sonuna da otomatik boşluk ekler
+            epaTemplates[templateId] = {
+                ad: templateName,
+                icerik: templateContent.replace(/\n/g, "<br>") + "<br><br><br>"
+            };
+            
+            localStorage.setItem('epa_custom_templates', JSON.stringify(epaTemplates));
+            alert("✅ Yeni şablon başarıyla eklendi ve AI hataları temizlendi!");
+            refreshTemplateDropdown();
+            document.getElementById('templateSelector').value = templateId;
+            loadTemplate();
+        }
+
+      function updateCurrentTemplate() {
+            const selector = document.getElementById('templateSelector');
+            const selectedKey = selector.value;
+
+            if (!selectedKey) {
+                alert("Lütfen güncellenecek bir şablon seçin.\n(Not: Arşiv kayıtları doğrudan şablon olarak güncellenemez.)");
+                return;
+            }
+
+            // 1. Kutulardaki mevcut verileri hafızaya al (Güncelleme sonrası kaybolmamaları için)
+            const currentInputs = {};
+            document.querySelectorAll('#dynamicInputsContainer input').forEach(input => {
+                currentInputs[input.id] = input.value;
+            });
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = document.getElementById('a4Document').innerHTML;
+
+            const dynamicFields = tempDiv.querySelectorAll('span[data-tagname]');
+            
+            dynamicFields.forEach(field => {
+                const tagName = field.getAttribute('data-tagname'); 
+                const originalTagText = document.createTextNode(`[${tagName}]`); 
+                field.parentNode.replaceChild(originalTagText, field);
+            });
+
+            let cleanHTML = tempDiv.innerHTML;
+            
+            // YENİ ZEKİ YAMA: Kullanıcı elle etiket yazdığında araya sızan görünmez HTML renk/biçim kodlarını temizler.
+            cleanHTML = cleanHTML.replace(/\[(.*?)\]/g, function(match, innerContent) {
+                let pureText = innerContent.replace(/<[^>]*>?/gm, ''); // İçindeki tüm HTML kodlarını yok et
+                return '[' + pureText.trim() + ']'; // Etiketi tertemiz geri ver
+            });
+
+            // HTML &nbsp; boşluklarını da düzelt
+            cleanHTML = cleanHTML.replace(/\[(?:\s|&nbsp;)+/g, '[').replace(/(?:\s|&nbsp;)+\]/g, ']'); 
+
+            epaTemplates[selectedKey].icerik = cleanHTML;
+            localStorage.setItem('epa_custom_templates', JSON.stringify(epaTemplates));
+
+            // Şablonu yenile
+            loadTemplate();
+
+            // 3. Hafızaya aldığımız verileri tekrar kutulara doldur ve ekrana yansıt
+            Object.keys(currentInputs).forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.value = currentInputs[id];
+                }
+            });
+            updateLivePreview();
+
+            alert("✅ Şablon başarıyla güncellendi!");
+        }
+        function deleteCurrentTemplate() {
+            const selector = document.getElementById('templateSelector');
+            const selectedKey = selector.value;
+
+            if (!selectedKey) {
+                alert("Lütfen silinecek bir şablon seçin.");
+                return;
+            }
+
+            if (confirm("Bu şablonu kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz!")) {
+                delete epaTemplates[selectedKey];
+                localStorage.setItem('epa_custom_templates', JSON.stringify(epaTemplates));
+                refreshTemplateDropdown();
+                document.getElementById('a4Document').innerHTML = "";
+                alert("🗑️ Şablon sistemden başarıyla silindi.");
+            }
+        }
+
+        function renameCurrentTemplate() {
+            const selector = document.getElementById('templateSelector');
+            const selectedKey = selector.value;
+
+            if (!selectedKey) {
+                alert("Lütfen ismi değiştirilecek bir şablon seçin.");
+                return;
+            }
+
+            const currentName = epaTemplates[selectedKey].ad;
+            const newName = prompt("Şablonun yeni ismini giriniz:", currentName);
+
+            if (newName && newName.trim() !== "" && newName.trim() !== currentName) {
+                epaTemplates[selectedKey].ad = newName.trim();
+                localStorage.setItem('epa_custom_templates', JSON.stringify(epaTemplates));
+                refreshTemplateDropdown(selectedKey); // Seçimimizi kaybetmeden menüyü yeniler
+                alert("✅ Şablon ismi başarıyla güncellendi!");
+            }
+        }
+
+        // GÜNCELLEME: Yapay Zeka komutu atıf (cite) yasağı ve alt boşluk kuralı ile donatıldı.
+        function copyAIPrompt() {
+            const promptText = `Sen üst düzey bir Web Geliştirici ve Resmi Evrak Tasarımcısısın. Sana vereceğim sözleşme metnini, akıllı form sistemimde kullanılmak üzere kusursuz bir HTML koduna çevireceksin. 
+
+KESİN KURALLAR VE MİMARİ STANDARTLAR:
+
+1. SIFIR SOHBET VE KOD BLOĞU ZORUNLULUĞU (ÇOK ÖNEMLİ): 
+Bana sadece ve sadece HTML kodunu ver. Çıktını KESİNLİKLE \`\`\`html ve \`\`\` etiketleri arasına alarak kopyalanabilir bir KOD BLOĞU olarak sun. 
+
+2. SİSTEM KAYNAK (CITE) FİLTRESİ (HAYATİ ÖNEMDE):
+Eğer arka plan sistemin sana zorla "[cite: 1]", "[1]" gibi kaynak işaretleri ekletiyorsa; bunları KESİNLİKLE HTML kodunun içine YAZMA. Eğer yazmaya mecbur bırakılıyorsan, bu cite işaretlerini HTML kod bloğunun tamamen DIŞINA (en sonuna) düz metin olarak bırak. Kodun içi tertemiz olmalıdır.
+
+3. DİNAMİK ETİKETLEME VE KUSURSUZ PARANTEZ (DİKKAT):
+Metin içindeki doldurulması gereken tüm değişkenleri BÜYÜK HARFLİ etiketlere çevir.
+UYARI: Tüm etiketler KESİNLİKLE köşeli parantez ile başlayıp, köşeli parantez ile BİTMELİDİR. Sadece ve sadece şu formatı kullan: [ETIKET_ADI]
+
+4. KUSURSUZ 2 SÜTUNLU TABLO YAPISI:
+Doldurulacak form niteliğindeki her bölümü KESİNLİKLE 2 sütunlu şık bir HTML tablosuna çevir. 
+- Tablo Kodu: <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+- Sol Sütun (Başlıklar - %35 Genişlik, Gri Arka Plan): <td style="width: 35%; background-color: #f8f9fa; border: 1px solid #bdc3c7; padding: 8px 12px;"><b>Başlık Adı</b></td>
+- Sağ Sütun (Değerler): <td style="width: 65%; border: 1px solid #bdc3c7; padding: 8px 12px;">[ETIKET_BURAYA]</td>
+
+5. HUKUKİ METİN HİZALAMASI VE BAĞIMSIZ ALT MADDELER KURALI (ÇOK ÖNEMLİ):
+Uzun paragrafları <div style="text-align: justify; line-height: 1.5; margin-bottom: 15px;"> içine al. 
+ALT MADDE KURALI: Eğer metin içinde 5.1, 5.2, 5.3 gibi numaralandırılmış alt maddeler varsa, bunları KESİNLİKLE tek bir paragrafın (div'in) içine hapsetme! Her bir alt madde için ayrı ayrı yeni bir <div style="text-align: justify; line-height: 1.5; margin-bottom: 15px;"> aç ve kapat. Böylece her alt madde alt alta, kendi bağımsız satırında ve nizami bir boşlukla yer alacaktır.
+
+6. İMZA ALANLARI (FLEXBOX DÜZENİ) VE TIKLAMA BOŞLUĞU:
+İmza alanlarını kesinlikle yan yana diz. 
+ANCAK ÇOK ÖNEMLİ: Ana metnin bittiği yer ile imza bloğunun başladığı yerin tam arasına, kullanıcının fareyle rahatça tıklayabilmesi için MUTLAKA şu kodu ekle: <div><br></div><div><br></div>
+
+7. EN ALT BOŞLUK (Tıklama Alanı):
+Belgenin en sonuna (imza alanından sonra), kullanıcının sonradan fareyle tıklayıp yeni maddeler ekleyebilmesi için MUTLAKA şu kodu ekle: <div><br></div><div><br></div><div><br></div>
+
+Ek:
+[SÖZLEŞME METNİNİ BURAYA YAPIŞTIRIN]`;
+            
+            navigator.clipboard.writeText(promptText).then(() => {
+                alert("🤖 Gelişmiş Hukuki HTML Promptu (Atıf Yasaklı ve Alt Boşluklu) panoya kopyalandı!");
+            }).catch(err => {
+                alert("Kopyalama başarısız oldu. Lütfen tarayıcı izinlerinizi kontrol edin.");
+            });
+        }
+
+        function openGuideModal() {
+            document.getElementById('guideModal').style.display = 'flex';
+        }
+
+        function closeGuideModal(event) {
+            if (event && event.target !== document.getElementById('guideModal')) return;
+            document.getElementById('guideModal').style.display = 'none';
+        }
+
+        function sendToWP() {
+            const a4Element = document.getElementById('a4Document');
+            let textToShare = a4Element.innerText || a4Element.textContent;
+            const finalMessage = "📄 *SÖZLEŞME / BELGE TASLAĞI* \n\n" + textToShare + "\n\n(Bu taslak EPA Akıllı Formlar üzerinden oluşturulmuştur.)";
+            window.open('https://wa.me/?text=' + encodeURIComponent(finalMessage), '_blank');
+        }
+
+        // --- TEMİZLENMİŞ YAZDIRMA MOTORU (SADECE SIFIR KALINTI İÇİN) ---
+        function smartPrint() {
+            window.print();
+        }
+
+        let epaArchives = JSON.parse(localStorage.getItem('epa_saved_documents')) || {};
+
+        function saveToArchive() {
+            const documentName = prompt("Bu evrakı hangi isimle arşive kaydetmek istiyorsunuz?\n(Örn: Müşteri Adı - Satış Yetkilendirme)");
+            if (!documentName) return; 
+
+            const archiveId = "arsiv_" + Date.now(); 
+            const currentHTML = document.getElementById('a4Document').innerHTML; 
+
+            epaArchives[archiveId] = {
+                isim: documentName,
+                icerik: currentHTML,
+                tarih: new Date().toLocaleDateString('tr-TR')
+            };
+
+            localStorage.setItem('epa_saved_documents', JSON.stringify(epaArchives));
+            alert("📁 Evrak başarıyla arşive kaydedildi!");
+            refreshArchiveList(); 
+        }
+
+       function refreshArchiveList(filterText = "") {
+            const archiveContainer = document.getElementById('archiveList');
+            archiveContainer.innerHTML = ''; 
+
+            const keys = Object.keys(epaArchives).reverse(); 
+
+            if (keys.length === 0) {
+                archiveContainer.innerHTML = '<div style="padding:10px; color:#7f8c8d; font-size:12px; text-align:center;">Henüz arşive kaydedilmiş bir evrak bulunmuyor.</div>';
+                return;
+            }
+
+            let displayedCount = 0; // Görüntülenen evrak sayacı
+
+            keys.forEach(key => {
+                const doc = epaArchives[key];
+                
+                // 1. KURAL: Arama (filtre) yapılıyorsa, kelimeyle eşleşmeyenleri atla
+                if (filterText && !doc.isim.toLowerCase().includes(filterText.toLowerCase())) return;
+                
+                // 2. KURAL: Arama YOKSA ve 10 evrak zaten çizildiyse, gerisini çizme (Gizle)
+                if (!filterText && displayedCount >= 10) return;
+
+                displayedCount++;
+
+                const div = document.createElement('div');
+                div.style.padding = "10px";
+                div.style.borderBottom = "1px solid #ddd";
+                div.style.fontSize = "12px";
+                div.style.display = "flex";
+                div.style.justifyContent = "space-between";
+                div.style.alignItems = "center";
+                div.style.background = "white";
+                div.style.marginBottom = "5px";
+                div.style.borderRadius = "4px";
+                div.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
+                
+                div.innerHTML = `
+                    <div style="flex: 1; overflow: hidden; cursor: pointer;">
+                        <strong id="title_${key}" style="color: #2c3e50; display: block;" onclick="loadFromArchive('${key}')">${doc.isim}</strong>
+                        <span style="color: #7f8c8d; font-size: 10px;" onclick="loadFromArchive('${key}')"><i class="fa-regular fa-calendar"></i> ${doc.tarih}</span>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="enableInlineEdit('${key}', 'archive')" style="background: none; border: none; color: #f39c12; cursor: pointer; padding: 5px;" title="İsmi Düzenle">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteFromArchive('${key}')" style="background: none; border: none; color: #e74c3c; cursor: pointer; padding: 5px;" title="Arşivden Sil">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                archiveContainer.appendChild(div);
+            });
+
+            // 3. KURAL (UX BİLGİLENDİRMESİ): Arama yapılmıyorsa ve toplam arşiv 10'dan büyükse alt kısma zarif bir uyarı ekle
+            if (!filterText && keys.length > 10) {
+                const hiddenCount = keys.length - 10;
+                const infoDiv = document.createElement('div');
+                infoDiv.style.padding = "8px";
+                infoDiv.style.textAlign = "center";
+                infoDiv.style.fontSize = "11px";
+                infoDiv.style.color = "#7f8c8d";
+                infoDiv.style.fontStyle = "italic";
+                infoDiv.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> +${hiddenCount} eski evrak arka planda. Bulmak için arama yapın.`;
+                archiveContainer.appendChild(infoDiv);
+            }
+        }
+
+        function enableInlineEdit(key, type) {
+            const titleElement = document.getElementById('title_' + key);
+            const currentName = titleElement.innerText;
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentName;
+            input.style.width = '95%';
+            input.style.padding = '3px';
+            input.style.fontSize = '12px';
+            input.style.fontWeight = 'bold';
+            input.style.border = '1px solid #3498db';
+            input.style.borderRadius = '3px';
+            
+            input.onblur = function() { saveInlineEdit(key, input.value, type, titleElement); };
+            input.onkeydown = function(e) { if(e.key === 'Enter') input.blur(); };
+            
+            titleElement.parentNode.replaceChild(input, titleElement);
+            input.focus();
+            input.select();
+        }
+
+        function saveInlineEdit(key, newName, type, oldTitleElement) {
+            newName = newName.trim();
+            if(newName === "") newName = "İsimsiz Evrak";
+            
+            if (type === 'archive') {
+                epaArchives[key].isim = newName;
+                localStorage.setItem('epa_saved_documents', JSON.stringify(epaArchives));
+                refreshArchiveList(); 
+            }
+        }
+
+        function loadFromArchive(archiveId) {
+            if (!epaArchives[archiveId]) return;
+
+            document.getElementById('a4Document').innerHTML = epaArchives[archiveId].icerik;
+            document.getElementById('dynamicInputsContainer').innerHTML = '<div style="padding:15px; background-color: #e8f4f8; color:#2980b9; font-size:12px; text-align:center; border-radius: 6px; font-weight: bold;"><i class="fa-solid fa-lock"></i> Bu bir arşiv kaydıdır.<br><br>Şablon etiketleri kilitlendi. Metin üzerinde farenizle manuel değişiklik yapabilirsiniz.</div>';
+            document.getElementById('templateSelector').value = "";
+        }
+
+        function searchArchive() {
+            const searchText = document.getElementById('archiveSearch').value;
+            refreshArchiveList(searchText);
+        }
+
+        function deleteFromArchive(archiveId) {
+            if (confirm("Bu müşteri evrakını arşivden kalıcı olarak silmek istediğinize emin misiniz?")) {
+                delete epaArchives[archiveId];
+                localStorage.setItem('epa_saved_documents', JSON.stringify(epaArchives));
+                refreshArchiveList();
+                document.getElementById('a4Document').innerHTML = ""; 
+            }
+        }
+
+       function switchToolbarTab(tabId) {
+            // Tüm sekmeleri ve butonları sıfırla
+            document.querySelectorAll('.toolbar-content').forEach(tab => tab.classList.remove('active-tab'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Tıklanan sekmeyi ve butonu aktif et
+            document.getElementById(tabId).classList.add('active-tab');
+            event.currentTarget.classList.add('active');
+        }
+
+        function customJustify() {
+            document.execCommand('justifyFull', false, null);
+            
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                let currentNode = selection.anchorNode;
+                
+                if (currentNode.nodeType === 3) {
+                    currentNode = currentNode.parentNode;
+                }
+                
+                const a4Document = document.getElementById('a4Document');
+                if (a4Document.contains(currentNode)) {
+                     while (currentNode && currentNode !== a4Document && currentNode.nodeName !== 'DIV' && currentNode.nodeName !== 'P' && currentNode.nodeName !== 'TD') {
+                         currentNode = currentNode.parentNode;
+                     }
+                     
+                     if (currentNode && currentNode !== a4Document) {
+                         currentNode.style.textAlign = 'justify';
+                     }
+                }
+            }
+            document.getElementById('a4Document').focus();
+        }
+// ==========================================
+        // 1. SEÇENEKLİ VE HAZIR MESAJLI DİNAMİK QR KOD ÜRETİCİ
+        // ==========================================
+        function insertQRCode() {
+            let choice = prompt("QR Kod türünü seçin:\n\n1 - WhatsApp (Hazır Mesajlı)\n2 - Sosyal Medya / Profil\n3 - Web Sitesi / Portföy", "1");
+            if (!choice) return;
+
+            let finalURL = "";
+
+            if (choice === "1") {
+                let phone = prompt("WhatsApp telefon numaranızı girin:\n(Örn: 05413493535)", "05413493535");
+                if (!phone) return;
+                
+                // Telefon numarasını temizle ve uluslararası formata çevir
+                phone = phone.replace(/\D/g, '');
+                if (phone.startsWith('0')) phone = '9' + phone;
+
+                let msg = prompt("Müşteri size gönderdiğinde yazacak olan 'Hazır Mesaj' metnini girin:", "Merhaba Yılmaz Bey, OZKAR Gayrimenkul portföyünüz hakkında bilgi almak istiyorum.");
+                let encodedMsg = msg ? encodeURIComponent(msg) : "";
+                
+                finalURL = `https://wa.me/${phone}${encodedMsg ? '?text=' + encodedMsg : ''}`;
+
+            } else if (choice === "2" || choice === "3") {
+                let url = prompt("Yönlendirilecek internet / sosyal medya bağlantısını (URL) yapıştırın:", "https://");
+                if (!url) return;
+                finalURL = url;
+            } else {
+                alert("Geçersiz seçim!");
+                return;
+            }
+
+            // Google API ile yüksek kaliteli QR oluştur ve HTML olarak belgeye bas
+            let qrApiURL = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalURL)}`;
+            let qrHTML = `<div style="text-align: center; display: inline-block; margin: 10px;"><img src="${qrApiURL}" alt="QR Kod" style="width: 100px; height: 100px; border: 1px solid #ddd; padding: 4px; background: white;"><div style="font-size: 11px; font-weight: bold; color: #333; margin-top: 4px;">Okutunuz</div></div>`;
+
+            document.getElementById('a4Document').focus();
+            document.execCommand('insertHTML', false, qrHTML);
+        }
+
+        // ==========================================
+        // 2. AKILLI RAKAM & TUTAR ÇEVİRİCİ MOTORU
+        // ==========================================
+        function convertNumberToText(number) {
+            if (isNaN(number) || number === "") return "";
+            number = parseInt(number, 10);
+            
+            const birlikler = ["", "Bir", "İki", "Üç", "Dört", "Beş", "Altı", "Yedi", "Sekiz", "Dokuz"];
+            const onlar = ["", "On", "Yirmi", "Otuz", "Kırk", "Elli", "Altmış", "Yetmiş", "Seksen", "Doksan"];
+            const binler = ["", "Bin", "Milyon", "Milyar", "Trilyon"];
+
+            if (number === 0) return "Sıfır Türk Lirası";
+
+            function cevir3Lu(num) {
+                let yuz = Math.floor(num / 100);
+                let onl = Math.floor((num % 100) / 10);
+                let birl = num % 10;
+                let sonuc = "";
+
+                if (yuz > 0) {
+                    if (yuz > 1) sonuc += birlikler[yuz] + " Yüz";
+                    else sonuc += "Yüz";
+                }
+                if (onl > 0) sonuc += onlar[onl];
+                if (birl > 0) sonuc += birlikler[birl];
+                return sonuc;
+            }
+
+            let strNum = number.toString();
+            let parcalar = [];
+            while (strNum.length > 0) {
+                parcalar.unshift(strNum.slice(-3));
+                strNum = strNum.slice(0, -3);
+            }
+
+            let res = "";
+            let parcaSayisi = parcalar.length;
+            for (let i = 0; i < parcaSayisi; i++) {
+                let pVal = parseInt(parcalar[i]);
+                if (pVal > 0) {
+                    let basamakIndex = parcaSayisi - i - 1;
+                    if (basamakIndex === 1 && pVal === 1) {
+                        res += "Bin ";
+                    } else {
+                        res += cevir3Lu(pVal) + " " + binler[basamakIndex] + " ";
+                    }
+                }
+            }
+            return res.trim() + " Türk Lirası";
+        }
+
+      // ==========================================
+        // 3. AKILLI RAKAM & TUTAR DÖNÜŞTÜRÜCÜ (OTOMATİK FORMAT VE ANINDA SENKRON)
+        // ==========================================
+        function applyAmountFormatting(inputElement) {
+            let val = inputElement.value.trim();
+            let cleanValue = val.replace(/[\.,\s]/g, ''); 
+            
+            let fieldName = "";
+            let prev = inputElement.previousElementSibling;
+            if (prev && prev.tagName.toLowerCase() === 'label') fieldName = prev.innerText.toLowerCase();
+            else if (inputElement.placeholder) fieldName = inputElement.placeholder.toLowerCase();
+            else if (inputElement.name) fieldName = inputElement.name.toLowerCase();
+
+            let isAmount = fieldName.includes('bedel') || fieldName.includes('tutar') || 
+                           fieldName.includes('fiyat') || fieldName.includes('ücret') || 
+                           fieldName.includes('kapora') || fieldName.includes('peşinat');
+
+            if (isAmount && /^\d+$/.test(cleanValue) && cleanValue.length > 0 && cleanValue.length < 15) {
+                let formattedNumber = new Intl.NumberFormat('tr-TR').format(cleanValue);
+                let textVersion = convertNumberToText(cleanValue);
+                
+                inputElement.value = `${formattedNumber} TL (${textVersion})`;
+                
+                // Sağ taraftaki (A4) önizlemeyi gecikmesiz olarak anında zorla güncelle!
+                if (typeof updateLivePreview === 'function') {
+                    updateLivePreview();
+                }
+            }
+        }
+
+        // 1. Durum: Kutudan çıkıldığında veya Tab tuşuna basıldığında çalıştır
+        document.addEventListener('focusout', function(e) {
+            if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
+                applyAmountFormatting(e.target);
+            }
+        });
+
+        // 2. Durum: Kutunun içindeyken "Enter" tuşuna basıldığında anında çalıştır
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
+                applyAmountFormatting(e.target);
+            }
+        });
+   // ==========================================
+        // 4. HUKUKİ MADDE KÜTÜPHANESİ
+        // ==========================================
+        let legalClauses = JSON.parse(localStorage.getItem('epa_legal_clauses')) || [
+            "Depozito tahliye anında güncelleme yapılmaksızın nominal değeriyle aynen iade edilecektir.",
+            "Kiracı, kiraladığı gayrimenkulü alt kiracıya kiralayamaz, devredemez veya kullanım hakkını başkasına kullandıramaz.",
+            "Taraflar, işbu sözleşmeden doğabilecek her türlü ihtilafta Antalya Mahkemeleri ve İcra Dairelerinin yetkili olduğunu kabul ederler."
+        ];
+
+        function openLegalModal() {
+            refreshLegalList();
+            document.getElementById('legalModal').style.display = 'flex';
+        }
+
+        function closeLegalModal(event) {
+            if (event && event.target !== document.getElementById('legalModal')) return;
+            document.getElementById('legalModal').style.display = 'none';
+        }
+
+        function addLegalClause() {
+            const input = document.getElementById('newLegalClause');
+            const text = input.value.trim();
+            if (text) {
+                legalClauses.push(text);
+                localStorage.setItem('epa_legal_clauses', JSON.stringify(legalClauses));
+                input.value = '';
+                refreshLegalList();
+            }
+        }
+
+        function deleteLegalClause(index) {
+            if (confirm("Bu maddeyi kütüphaneden kalıcı olarak silmek istediğinize emin misiniz?")) {
+                legalClauses.splice(index, 1);
+                localStorage.setItem('epa_legal_clauses', JSON.stringify(legalClauses));
+                refreshLegalList();
+            }
+        }
+
+        function insertLegalClause(index) {
+            const clauseText = legalClauses[index];
+            // Formatlı bir şekilde (şık bir paragraf olarak) ekliyoruz
+            const htmlToInsert = `<div style="text-align: justify; line-height: 1.5; margin-bottom: 10px;">${clauseText}</div>`;
+            
+            document.getElementById('a4Document').focus();
+            document.execCommand('insertHTML', false, htmlToInsert);
+            
+            closeLegalModal();
+        }
+
+        function refreshLegalList() {
+            const container = document.getElementById('legalListContainer');
+            container.innerHTML = '';
+            
+            if (legalClauses.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding: 20px; color:#7f8c8d;">Kütüphanenizde henüz kayıtlı bir madde yok.</div>';
+                return;
+            }
+
+            // En son eklenen en üstte görünsün diye listeyi ters çevirip işliyoruz
+            legalClauses.slice().reverse().forEach((clause, reversedIndex) => {
+                const originalIndex = legalClauses.length - 1 - reversedIndex;
+                const div = document.createElement('div');
+                div.style.display = "flex";
+                div.style.justifyContent = "space-between";
+                div.style.alignItems = "center";
+                div.style.padding = "12px";
+                div.style.borderBottom = "1px solid #ddd";
+                div.style.background = "white";
+                div.style.marginBottom = "8px";
+                div.style.borderRadius = "4px";
+                div.style.boxShadow = "0 1px 2px rgba(0,0,0,0.05)";
+
+                div.innerHTML = `
+                    <div style="flex: 1; padding-right: 15px; font-size: 13px; color: #34495e; line-height: 1.4;">
+                        ${clause}
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="insertLegalClause(${originalIndex})" style="background: #2980b9; border: none; color: white; cursor: pointer; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; transition: 0.2s;" title="Belgeye Ekle">
+                            <i class="fa-solid fa-plus"></i> Ekle
+                        </button>
+                        <button onclick="deleteLegalClause(${originalIndex})" style="background: #e74c3c; border: none; color: white; cursor: pointer; padding: 6px 10px; border-radius: 4px; font-size: 12px; transition: 0.2s;" title="Kütüphaneden Sil">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // ==========================================
+        // 5. FİRMA PROFİLİ VE OTOMATİK DOLDURMA (HAYALET YAZMAN)
+        // ==========================================
+        function openCompanyModal() {
+            // Mevcut verileri kutulara doldur
+            document.getElementById('comp_unvan').value = companyProfile.unvan || "";
+            document.getElementById('comp_yetki').value = companyProfile.yetki || "";
+            document.getElementById('comp_adres').value = companyProfile.adres || "";
+            document.getElementById('comp_vergi').value = companyProfile.vergi || "";
+            document.getElementById('comp_telefon').value = companyProfile.telefon || "";
+            document.getElementById('comp_eposta').value = companyProfile.eposta || "";
+            document.getElementById('comp_yetkili').value = companyProfile.yetkili || "";
+            document.getElementById('comp_mahkeme').value = companyProfile.mahkeme || "";
+            
+            document.getElementById('companyModal').style.display = 'flex';
+        }
+
+        function closeCompanyModal(event) {
+            if (event && event.target !== document.getElementById('companyModal')) return;
+            document.getElementById('companyModal').style.display = 'none';
+        }
+
+        function saveCompanyProfile() {
+            companyProfile = {
+                unvan: document.getElementById('comp_unvan').value.trim(),
+                yetki: document.getElementById('comp_yetki').value.trim(),
+                adres: document.getElementById('comp_adres').value.trim(),
+                vergi: document.getElementById('comp_vergi').value.trim(),
+                telefon: document.getElementById('comp_telefon').value.trim(),
+                eposta: document.getElementById('comp_eposta').value.trim(),
+                yetkili: document.getElementById('comp_yetkili').value.trim(),
+                mahkeme: document.getElementById('comp_mahkeme').value.trim()
+            };
+            localStorage.setItem('epa_company_profile', JSON.stringify(companyProfile));
+            closeCompanyModal();
+            alert("✅ Firma bilgileriniz başarıyla kaydedildi! Bundan sonra seçtiğiniz şablonlarda bu alanlar otomatik doldurulacaktır.");
+            
+            // Açık olan şablonu yenileyip verilerin anında yansımasını sağla
+            const currentTemplate = document.getElementById('templateSelector').value;
+            if (currentTemplate) {
+                loadTemplate();
+            }
+        }
+
+        // ==========================================
+        // 6. SAYFA NUMARATÖRÜ EKLENTİSİ
+        // ==========================================
+        function insertPageNumber() {
+            let totalPage = prompt("Belgeniz toplam kaç sayfa olacak?", "3");
+            if (!totalPage) return;
+            let currentPage = prompt("Şu an kaçıncı sayfadasınız?", "1");
+            if (!currentPage) return;
+
+            // Düzenlenebilir, varsayılan olarak sağa dayalı ve belirgin sayfa numarası bloğu
+            const pageHTML = `<div style="text-align: right; font-size: 11px; font-weight: bold; color: #555; margin-top: 15px; margin-bottom: 5px;">Sayfa ${currentPage} / ${totalPage}</div><br>`;
+            
+            document.getElementById('a4Document').focus();
+            document.execCommand('insertHTML', false, pageHTML);
+        }
+
+        // ==========================================
+        // 7. KURUMSAL ANTET (HEADER) MOTORU
+        // ==========================================
+        let currentHeaderLogo = "";
+
+        function handleHeaderLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentHeaderLogo = e.target.result;
+                document.getElementById('headerLogoStatus').style.display = 'inline'; // Yüklendi onayı
+            };
+            reader.readAsDataURL(file);
+            event.target.value = ''; // Aynı logoyu tekrar seçebilmek için inputu temizle
+        }
+
+        // Anteti tamamen silen fonksiyon
+        function removeCorporateHeader() {
+            const existingHeader = document.getElementById('epa-kurumsal-antet');
+            if (existingHeader) {
+                existingHeader.remove();
+            }
+        }
+
+        function insertCorporateHeader() {
+            if (!currentHeaderLogo) {
+                alert("Lütfen önce antette kullanılacak logonuzu seçin.");
+                return;
+            }
+            
+            // Önce kağıtta var olan eski anteti bul ve sil (Üst üste binmeyi engeller)
+            removeCorporateHeader();
+            
+            const companyName = companyProfile.unvan ? companyProfile.unvan.toUpperCase() : "FİRMA UNVANI AYARLARDAN EKLENMEDİ";
+            const bgColor = document.getElementById('headerBgColor').value;
+            const textColor = document.getElementById('headerTextColor').value;
+            
+            const height = document.getElementById('headerHeight').value;
+            const logoSize = document.getElementById('headerLogoSize').value;
+            const fontSize = document.getElementById('headerFontSize').value;
+            const layout = document.getElementById('headerLayout').value;
+            const fontFamily = document.getElementById('headerFontFamily').value;
+            const contactInfoOption = document.getElementById('headerContactInfo').value; // YENİ: İletişim Seçeneği
+            
+            // AKILLI ALT BİLGİ (İLETİŞİM VE YETKİ) OLUŞTURUCU
+            let contactHTML = "";
+            if (contactInfoOption === "goster") {
+                let tel = companyProfile.telefon ? "Tel: " + companyProfile.telefon : "";
+                let yetki = companyProfile.yetki ? "Yetki Belgesi: " + companyProfile.yetki : "";
+                let separator = (tel && yetki) ? " | " : "";
+                let contactText = tel + separator + yetki;
+                
+                if (contactText !== "") {
+                    // Saydam, zarif ve ince fontlu alt satır (Ana renkle uyumlu kalması için inherit kullanıyoruz)
+                    contactHTML = `<div style="color: ${textColor}; font-size: 11px; margin-top: 4px; opacity: 0.85; font-weight: normal; font-family: 'Segoe UI', sans-serif; letter-spacing: 0.5px;">${contactText}</div>`;
+                }
+            }
+
+            // YENİ NESİL KUSURSUZ HİZALAMA (Esnek Kutu - Flex 1)
+            let flexLayout = "row";
+            let logoOrder = 1;
+            let textOrder = 2;
+            let textAlign = "right"; 
+            let gap = "20px";
+            let justifyContentText = "flex-end"; 
+            
+            if (layout === "logo-left-text-right") {
+                textAlign = "right";
+                justifyContentText = "flex-end";
+            } else if (layout === "logo-right-text-left") {
+                textAlign = "left";
+                justifyContentText = "flex-start";
+                logoOrder = 2;
+                textOrder = 1;
+            } else if (layout === "logo-left-text-center") {
+                textAlign = "center";
+                justifyContentText = "center";
+            } else if (layout === "logo-right-text-center") {
+                textAlign = "center";
+                justifyContentText = "center";
+                logoOrder = 2;
+                textOrder = 1;
+            } else if (layout === "center-all") {
+                textAlign = "center";
+                justifyContentText = "center";
+                flexLayout = "column";
+                gap = "15px";
+            }
+            
+            // DİKKAT: Metin bloğu artık dikey hizalı (flex-direction: column) ki alt bilgi unvanın tam altına yerleşsin.
+            const headerHTML = `
+            <div id="epa-kurumsal-antet" contenteditable="false" style="width: 100%; min-height: ${height}; background-color: ${bgColor}; display: flex; flex-direction: ${flexLayout}; justify-content: ${layout === 'center-all' ? 'center' : 'space-between'}; align-items: center; padding: 15px 25px; gap: ${gap}; box-sizing: border-box; border-radius: 6px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
+                
+                <div style="display: flex; align-items: center; justify-content: center; order: ${logoOrder}; height: ${layout === 'center-all' ? 'auto' : height}; flex-shrink: 0;">
+                    <img src="${currentHeaderLogo}" style="max-height: ${logoSize}; max-width: 250px; object-fit: contain;">
+                </div>
+                
+                <div style="display: flex; flex-direction: column; justify-content: center; align-items: ${textAlign === 'center' ? 'center' : (textAlign === 'right' ? 'flex-end' : 'flex-start')}; flex: 1; order: ${textOrder}; word-wrap: break-word; overflow-wrap: break-word;">
+                    <h2 style="color: ${textColor}; margin: 0; font-size: ${fontSize}; font-weight: bold; font-family: ${fontFamily}; line-height: 1.2; text-align: ${textAlign};">${companyName}</h2>
+                    ${contactHTML}
+                </div>
+                
+            </div>`;
+            
+            const a4Doc = document.getElementById('a4Document');
+            a4Doc.insertAdjacentHTML('afterbegin', headerHTML);
+        }
+    </script>
+</body>
+</html>
