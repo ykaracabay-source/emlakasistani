@@ -99,14 +99,30 @@
             position: relative;
             border-radius: 4px;
         }
+        .a4-paper {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+            cursor: text;
+        }
+        .a4-paper * { -webkit-user-select: text; user-select: text; }
+        .a4-paper [contenteditable="false"] { -webkit-user-select: none; user-select: none; }
         .a4-paper:focus { outline: none; }
-        .a4-paper:empty::before {
-            content: "Sözleşme metninizi doğrudan buraya yazabilir, üstteki araçlardan tablo/antet ekleyebilir veya bilgisayarınızdaki Word (.docx) / Excel (.xlsx) dosyasını ekranın üzerine sürükleyip bırakabilirsiniz...";
-            color: #94a3b8;
-            font-style: italic;
-            font-family: 'Inter', sans-serif;
-            font-size: 10.5pt;
-            pointer-events: none;
+
+        #a4SmartPlaceholder {
+            position: absolute;
+            top: 15mm; left: 15mm; right: 15mm;
+            color: #94a3b8; font-style: italic;
+            font-family: 'Inter', sans-serif; font-size: 10.5pt;
+            line-height: 1.5; pointer-events: none; user-select: none; z-index: 5;
+        }
+        #a4SmartPlaceholder.hidden-ph { opacity: 0; visibility: hidden; }
+
+        #a4PageBorderOverlay {
+            position: absolute; inset: 0;
+            pointer-events: none; z-index: 20;
+            overflow: hidden; border-radius: 4px;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
 
         .a4-paper h1, .a4-paper h2, .a4-paper h3, .a4-paper h4, .a4-paper h5 {
@@ -252,6 +268,8 @@
             #toastContainer,
             #exitFocusFloatingBtn,
             #pageBoundaryGuides,
+            #a4SmartPlaceholder,
+            #a4PageBorderOverlay,
             #globalDropOverlay,
             .modal-backdrop,
             .no-print {
@@ -294,7 +312,7 @@
         }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden text-slate-800 select-none">
+<body class="h-screen flex flex-col overflow-hidden text-slate-800"></body>
 
     <!-- 100MM KALİBRASYON CETVELİ (Piksel -> Milimetre dönüşümü için) -->
     <div id="mmCalibrator" style="position:fixed; left:-9999px; top:-9999px; height:100mm; width:1mm; pointer-events:none;"></div>
@@ -409,9 +427,14 @@
 
             <!-- Şablon Yükleme ve Kaydetme İşlemleri -->
             <div class="space-y-1.5 hide-in-focus pt-1 border-t border-slate-100">
-                <button onclick="openImportModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 shadow-xs transition">
-                    <i class="fa-solid fa-file-circle-plus"></i> <span>Yeni Şablon Ekle (Word / Excel / Boş)</span>
-                </button>
+                <div class="grid grid-cols-5 gap-1.5">
+                    <button onclick="startFreshBlankPage(true)" class="col-span-2 bg-slate-800 hover:bg-slate-900 text-white text-[11.5px] font-extrabold py-2.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 shadow-xs transition" title="Dosya yüklemeden tertemiz boş A4 sayfası açar">
+                        <i class="fa-solid fa-file-pen text-amber-300"></i> <span>Yeni Boş Sayfa</span>
+                    </button>
+                    <button onclick="openImportModal()" class="col-span-3 bg-indigo-600 hover:bg-indigo-700 text-white text-[11.5px] font-bold py-2.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 shadow-xs transition">
+                        <i class="fa-solid fa-file-circle-plus"></i> <span>Word / Excel Yükle</span>
+                    </button>
+                </div>
 
                 <div class="grid grid-cols-2 gap-1.5">
                     <button onclick="openSaveAsNewTemplateModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11.5px] font-bold py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition" title="Kağıttaki mevcut çalışmaya isim vererek yeni şablon olarak kaydeder">
@@ -496,7 +519,10 @@
                             <i class="fa-solid fa-pen-nib"></i> 3. Metin Düzeni
                         </button>
                         <button id="btn-tab-kurumsal" onclick="switchStudioTab('tab-kurumsal')" class="studio-tab-btn px-3.5 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 whitespace-nowrap bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
-                            <i class="fa-solid fa-building-flag"></i> 4. Kurumsal Kimlik Profilleri
+                            <i class="fa-solid fa-building-flag"></i> 4. Kurumsal Kimlik
+                        </button>
+                        <button id="btn-tab-cerceve" onclick="switchStudioTab('tab-cerceve')" class="studio-tab-btn px-3.5 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 whitespace-nowrap bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                            <i class="fa-solid fa-border-all"></i> 5. Sayfa Kenarlığı &amp; Çerçeve
                         </button>
                     </div>
 
@@ -782,6 +808,61 @@
                     </div>
                 </div>
 
+                <!-- SEKME 5: SAYFA KENARLIĞI & MODERN ÇERÇEVE STÜDYOSU -->
+                <div id="tab-cerceve" class="studio-tab-pane hidden px-4 py-2 flex-col items-center gap-1.5 bg-white select-none">
+                    <div class="w-full max-w-6xl flex flex-wrap justify-center items-center gap-2 text-xs">
+                        <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                            <span class="text-[11px] font-extrabold text-slate-700"><i class="fa-solid fa-border-top-left text-indigo-600 mr-1"></i>Yön:</span>
+                            <select id="pageBorderSide" onchange="onPageBorderControlChange(false)" class="text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1">
+                                <option value="none" selected>Kenarlık Yok (Sade A4)</option>
+                                <option value="left">Tek Taraflı — Sol Şerit</option>
+                                <option value="right">Tek Taraflı — Sağ Şerit</option>
+                                <option value="left_right">Çift Taraflı — Sol ve Sağ</option>
+                                <option value="top_bottom">Çift Taraflı — Üst ve Alt</option>
+                                <option value="all">Tam Çerçeve (4 Kenar)</option>
+                            </select>
+                            <span class="text-[11px] font-extrabold text-slate-700 ml-1">Stil:</span>
+                            <select id="pageBorderStyle" onchange="onPageBorderControlChange(false)" class="text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1">
+                                <option value="solid" selected>Modern Düz Çizgi</option>
+                                <option value="double">Resmi Çift Çizgi (Noter / Akit)</option>
+                                <option value="corners">Mimari L-Köşebent</option>
+                                <option value="gallery">İçten İnce Konturlu (Prestij)</option>
+                                <option value="dashed">Kesikli / Teknik Çizgi</option>
+                            </select>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2 bg-indigo-50/60 border border-indigo-200/80 rounded-lg px-2.5 py-1.5 text-[11px]">
+                            <label class="flex items-center gap-1.5 font-bold text-slate-700 cursor-pointer">
+                                <span>Renk:</span>
+                                <input type="color" id="pageBorderColor" value="#1e293b" oninput="onPageBorderControlChange(true)" onchange="commitPageBorderSnapshot()" class="w-6 h-6 rounded cursor-pointer border border-slate-300">
+                            </label>
+                            <button type="button" onclick="syncPageBorderWithAntetColor()" class="bg-white hover:bg-indigo-100 text-indigo-800 border border-indigo-300 font-bold px-2 py-1 rounded transition flex items-center gap-1">
+                                <i class="fa-solid fa-eye-dropper text-indigo-600"></i> Antet Rengini Al
+                            </button>
+                            <label class="flex items-center gap-1 font-semibold text-slate-700">
+                                <span>Kalınlık: <b id="lblBorderWidth" class="text-indigo-700">3px</b></span>
+                                <input type="range" id="pageBorderWidth" min="1" max="8" step="0.5" value="3" oninput="onPageBorderControlChange(true)" onchange="commitPageBorderSnapshot()" class="w-16 accent-indigo-600 cursor-pointer">
+                            </label>
+                            <label class="flex items-center gap-1 font-semibold text-slate-700">
+                                <span>Mesafe: <b id="lblBorderOffset" class="text-indigo-700">9mm</b></span>
+                                <input type="range" id="pageBorderOffset" min="6" max="13" step="1" value="9" oninput="onPageBorderControlChange(true)" onchange="commitPageBorderSnapshot()" class="w-14 accent-indigo-600 cursor-pointer">
+                            </label>
+                            <select id="pageBorderRadius" onchange="onPageBorderControlChange(false)" class="text-[11px] bg-white border border-slate-300 rounded px-2 py-1 font-semibold text-slate-700">
+                                <option value="0" selected>Köşe: Keskin (0px)</option>
+                                <option value="8">Köşe: Modern Oval (8px)</option>
+                                <option value="14">Köşe: Yumuşak (14px)</option>
+                            </select>
+                            <select id="pageBorderScope" onchange="onPageBorderControlChange(false)" class="text-[11px] bg-white border border-slate-300 rounded px-2 py-1 font-semibold text-slate-700">
+                                <option value="all" selected>Tüm Sayfalarda</option>
+                                <option value="first">Sadece 1. Sayfa</option>
+                            </select>
+                            <button type="button" onclick="resetPageBorderToNone()" class="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 font-bold px-2 py-1 rounded transition">
+                                <i class="fa-solid fa-xmark"></i> Kaldır
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Gizli Yükleyiciler -->
                 <input type="file" id="imageUploader" accept="image/*" class="hidden" onchange="insertUploadedImage(event)">
                 <input type="file" id="inlineExcelTableUploader" accept=".xlsx,.xls,.csv" class="hidden" onchange="insertExcelAsTableInline(event)">
@@ -816,11 +897,15 @@
                 </div>
             </div>
 
-            <!-- CANLI A4 SAHNESİ + SAYFA SINIRI CETVELİ -->
+            <!-- CANLI A4 SAHNESİ + SAYFA KENARLIĞI + AKILLI İPUCU + SAYFA SINIRI CETVELİ -->
             <div class="pt-5 px-4 w-full flex justify-center select-text">
-                <div class="a4-stage-wrapper">
+                <div class="a4-stage-wrapper" onclick="handleStageClickFocus(event)">
+                    <div id="a4PageBorderOverlay" class="no-print"></div>
+                    <div id="a4SmartPlaceholder" class="no-print">
+                        Sözleşme veya tutanak metninizi doğrudan buraya tıklayıp yazabilir, üstteki araçlardan kurumsal antet / tablo / çerçeve ekleyebilir veya Word (.docx) &amp; Excel (.xlsx) dosyanızı ekranın üzerine sürükleyip bırakabilirsiniz...
+                    </div>
                     <div id="pageBoundaryGuides" class="no-print" style="position:absolute; inset:0; pointer-events:none; z-index:25;"></div>
-                    <div id="a4Document" class="a4-paper" contenteditable="true" spellcheck="false"></div>
+                    <div id="a4Document" class="a4-paper" contenteditable="true" spellcheck="false"><div><br></div></div>
                 </div>
             </div>
         </main>
@@ -3862,7 +3947,7 @@
                     const html = serializeCurrentEditorAsTemplateHTML();
                     const id = 'sablon_' + Date.now();
                     const nowStamp = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-                    contractTemplates[id] = { ad: name, icerik: html, updatedAt: nowStamp };
+                    contractTemplates[id] = { ad: name, icerik: html, updatedAt: nowStamp, borderConfig: normalizeBorderConfig(currentPageBorderConfig) };
                     activeTemplateId = id;
 
                     await persistDataVerified(STORAGE_KEYS.PROFILES, corporateProfiles);
@@ -5233,6 +5318,7 @@
         <w:sectPr>
             <w:pgSz w:w="11906" w:h="16838"/>
             <w:pgMar w:top="850" w:right="850" w:bottom="964" w:left="850" w:header="450" w:footer="450" w:gutter="0"/>
+            ${buildDocxPageBordersXML(currentPageBorderConfig)}
         </w:sectPr>
     </w:body>
 </w:document>`;
@@ -5585,6 +5671,368 @@
         }
 
         function openGuideModal() { openModal('guideModal'); }
+
+        // =========================================================================
+        // 16. BOŞ SAYFA YAZMA DÜZELTMESİ & MODERN SAYFA KENARLIĞI MOTORU (v2)
+        // =========================================================================
+        STORAGE_KEYS.BLANK_BORDER_CFG = 'akilli_bos_sayfa_cerceve_v1';
+        const DEFAULT_PAGE_BORDER_CONFIG = {
+            side: 'none', style: 'solid', color: '#1e293b',
+            widthPx: 3, offsetMm: 9, radiusPx: 0, scope: 'all'
+        };
+        let currentPageBorderConfig = Object.assign({}, DEFAULT_PAGE_BORDER_CONFIG);
+        let userTypedDuringBoot = false;
+        let bootFinished = false;
+
+        function isEditorVisuallyEmpty(ed) {
+            ed = ed || document.getElementById('a4Document');
+            if (!ed) return true;
+            if (ed.querySelector('table, img, #epa-kurumsal-antet, #epa-kurumsal-footer, .dynamic-field, .page-break-indicator, ul, ol, hr')) return false;
+            return (ed.innerText || '').replace(/[\u200B\r\n\s]+/g, '').length === 0;
+        }
+
+        function syncSmartPlaceholderVisibility() {
+            const ph = document.getElementById('a4SmartPlaceholder');
+            if (ph) ph.classList.toggle('hidden-ph', !isEditorVisuallyEmpty());
+        }
+
+        function ensureEditorHasEditableLine(focusCaret = false) {
+            const ed = document.getElementById('a4Document');
+            if (!ed) return;
+            if (ed.innerHTML.trim() === '' || ed.innerHTML.trim() === '<br>') {
+                ed.innerHTML = '<div><br></div>';
+            }
+            // Sadece antet varsa ve altında yazı satırı yoksa boş satır ekle
+            const hasBodyLine = ed.querySelector('div:not(#epa-kurumsal-antet):not(#epa-kurumsal-footer), p, table, ul, ol, h1, h2, h3, h4');
+            if (!hasBodyLine) {
+                const footer = ed.querySelector('#epa-kurumsal-footer');
+                if (footer) footer.insertAdjacentHTML('beforebegin', '<div><br></div>');
+                else ed.insertAdjacentHTML('beforeend', '<div><br></div>');
+            }
+            syncSmartPlaceholderVisibility();
+
+            if (focusCaret) {
+                ed.focus();
+                try {
+                    const sel = window.getSelection();
+                    const range = document.createRange();
+                    let target = ed.querySelector('div:not(#epa-kurumsal-antet):not(#epa-kurumsal-footer), p');
+                    if (!target) {
+                        ed.insertAdjacentHTML('beforeend', '<div><br></div>');
+                        target = ed.lastElementChild;
+                    }
+                    range.selectNodeContents(target);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    savedSelectionRange = range.cloneRange();
+                } catch (_) {}
+            }
+        }
+
+        function handleStageClickFocus(e) {
+            const ed = document.getElementById('a4Document');
+            if (!ed || e.target !== ed) return;
+            const bodyText = Array.from(ed.childNodes)
+                .filter(n => !(n.nodeType === 1 && (n.id === 'epa-kurumsal-antet' || n.id === 'epa-kurumsal-footer')))
+                .map(n => n.textContent || '')
+                .join('').replace(/[\u200B\r\n\s]+/g, '');
+            if (bodyText.length === 0 && !ed.querySelector('table')) {
+                ensureEditorHasEditableLine(true);
+            }
+        }
+
+        async function startFreshBlankPage(focusNow = true) {
+            const selector = document.getElementById('templateSelector');
+            activeTemplateId = '__BLANK__';
+            await persistDataVerified(STORAGE_KEYS.ACTIVE_TEMPLATE_ID, activeTemplateId);
+            if (selector) {
+                if (!selector.querySelector('option[value="__BLANK__"]')) {
+                    const blankOpt = document.createElement('option');
+                    blankOpt.value = '__BLANK__';
+                    blankOpt.innerText = '📄 -- Boş Çalışma Sayfası (Sıfırdan Yaz) --';
+                    selector.insertBefore(blankOpt, selector.firstChild);
+                }
+                selector.value = '__BLANK__';
+            }
+            const ed = document.getElementById('a4Document');
+            ed.innerHTML = '<div><br></div>';
+            document.getElementById('unsavedBanner').classList.add('hidden');
+            document.getElementById('unsavedBanner').classList.remove('flex');
+            const savedBlankBorder = await loadKeyWithMigration(STORAGE_KEYS.BLANK_BORDER_CFG, DEFAULT_PAGE_BORDER_CONFIG);
+            syncPageBorderControlsUI(savedBlankBorder);
+            renderLivePageBorderOverlay();
+            syncInputsFromDocument(true);
+            resetHistoryWithCurrentDOM();
+            ensureEditorHasEditableLine(focusNow);
+            updateLivePageBoundaryGuides();
+            if (focusNow) showToast('Yeni boş A4 sayfası hazır, doğrudan yazmaya başlayabilirsiniz.', 'info');
+        }
+
+        function normalizeBorderConfig(cfg) {
+            let r = parseInt(cfg?.radiusPx, 10) || 0;
+            if (r === 8) r = 18;
+            if (r === 14) r = 34;
+            return {
+                side: cfg?.side || 'none',
+                style: cfg?.style || 'solid',
+                color: cfg?.color || '#1e293b',
+                widthPx: Math.min(8, Math.max(1, parseFloat(cfg?.widthPx) || 3)),
+                offsetMm: Math.min(13, Math.max(6, parseInt(cfg?.offsetMm, 10) || 9)),
+                radiusPx: r,
+                scope: cfg?.scope || 'all'
+            };
+        }
+
+        function syncPageBorderControlsUI(cfg) {
+            const c = normalizeBorderConfig(cfg);
+            currentPageBorderConfig = c;
+            if (document.getElementById('pageBorderSide')) document.getElementById('pageBorderSide').value = c.side;
+            if (document.getElementById('pageBorderStyle')) document.getElementById('pageBorderStyle').value = c.style;
+            if (document.getElementById('pageBorderColor')) document.getElementById('pageBorderColor').value = c.color;
+            if (document.getElementById('pageBorderWidth')) document.getElementById('pageBorderWidth').value = c.widthPx;
+            if (document.getElementById('pageBorderOffset')) document.getElementById('pageBorderOffset').value = c.offsetMm;
+            if (document.getElementById('pageBorderRadius')) document.getElementById('pageBorderRadius').value = String(c.radiusPx);
+            if (document.getElementById('pageBorderScope')) document.getElementById('pageBorderScope').value = c.scope;
+            if (document.getElementById('lblBorderWidth')) document.getElementById('lblBorderWidth').innerText = c.widthPx + 'px';
+            if (document.getElementById('lblBorderOffset')) document.getElementById('lblBorderOffset').innerText = c.offsetMm + 'mm';
+        }
+
+        function buildPageBorderBoxInnerHTML(cfg) {
+            const c = normalizeBorderConfig(cfg);
+            if (c.side === 'none') return '';
+            const off = `${c.offsetMm}mm`, col = c.color, w = c.widthPx;
+            const rPx = c.radiusPx;
+            const rad = `${rPx}px`;
+            const hasT = (c.side === 'all' || c.side === 'top_bottom');
+            const hasB = (c.side === 'all' || c.side === 'top_bottom');
+            const hasL = (c.side === 'all' || c.side === 'left' || c.side === 'left_right');
+            const hasR = (c.side === 'all' || c.side === 'right' || c.side === 'left_right');
+
+            // 1. Mimari L-Köşebent (Tüm yönlerde köşe ovalliğini destekler)
+            if (c.style === 'corners') {
+                const arm = '24mm', bs = `${w}px solid ${col}`;
+                return [
+                    (hasT || hasL) ? `<div style="position:absolute;top:${off};left:${off};width:${arm};height:${arm};border-top:${bs};border-left:${bs};border-top-left-radius:${rad};box-sizing:border-box;"></div>` : '',
+                    (hasT || hasR) ? `<div style="position:absolute;top:${off};right:${off};width:${arm};height:${arm};border-top:${bs};border-right:${bs};border-top-right-radius:${rad};box-sizing:border-box;"></div>` : '',
+                    (hasB || hasL) ? `<div style="position:absolute;bottom:${off};left:${off};width:${arm};height:${arm};border-bottom:${bs};border-left:${bs};border-bottom-left-radius:${rad};box-sizing:border-box;"></div>` : '',
+                    (hasB || hasR) ? `<div style="position:absolute;bottom:${off};right:${off};width:${arm};height:${arm};border-bottom:${bs};border-right:${bs};border-bottom-right-radius:${rad};box-sizing:border-box;"></div>` : ''
+                ].join('');
+            }
+
+            const isDoubleLike = (c.style === 'double' || c.style === 'gallery');
+            const lt = c.style === 'dashed' ? 'dashed' : 'solid';
+            const ow = c.style === 'double' ? Math.max(1.5, w * 0.65) : w;
+            const iw = c.style === 'double' ? Math.max(1, w * 0.45) : 1;
+            const gap = c.style === 'double' ? Math.max(3.5, Math.round(w + 2)) : 4.5;
+            const innerOp = c.style === 'gallery' ? '0.55' : '0.92';
+            const innerR = `${Math.max(2, rPx - gap)}px`;
+
+            // 2. Tek / Çift Taraflı Şeritlerde Köşe > 0 Seçildiğinde Zarif Kavisli Kanca Uçlar (╭ ve ╰)
+            if (rPx > 0 && c.side !== 'all') {
+                const capLen = rPx >= 28 ? '28mm' : '20mm';
+                let html = '';
+
+                if (c.side === 'left' || c.side === 'left_right') {
+                    html += `<div style="position:absolute;top:${off};bottom:${off};left:${off};width:${capLen};border-left:${ow}px ${lt} ${col};border-top:${ow}px ${lt} ${col};border-bottom:${ow}px ${lt} ${col};border-top-left-radius:${rad};border-bottom-left-radius:${rad};box-sizing:border-box;"></div>`;
+                    if (isDoubleLike) {
+                        html += `<div style="position:absolute;top:calc(${off} + ${gap}px);bottom:calc(${off} + ${gap}px);left:calc(${off} + ${gap}px);width:calc(${capLen} - ${gap}px);border-left:${iw}px ${lt} ${col};border-top:${iw}px ${lt} ${col};border-bottom:${iw}px ${lt} ${col};border-top-left-radius:${innerR};border-bottom-left-radius:${innerR};opacity:${innerOp};box-sizing:border-box;"></div>`;
+                    }
+                }
+                if (c.side === 'right' || c.side === 'left_right') {
+                    html += `<div style="position:absolute;top:${off};bottom:${off};right:${off};width:${capLen};border-right:${ow}px ${lt} ${col};border-top:${ow}px ${lt} ${col};border-bottom:${ow}px ${lt} ${col};border-top-right-radius:${rad};border-bottom-right-radius:${rad};box-sizing:border-box;"></div>`;
+                    if (isDoubleLike) {
+                        html += `<div style="position:absolute;top:calc(${off} + ${gap}px);bottom:calc(${off} + ${gap}px);right:calc(${off} + ${gap}px);width:calc(${capLen} - ${gap}px);border-right:${iw}px ${lt} ${col};border-top:${iw}px ${lt} ${col};border-bottom:${iw}px ${lt} ${col};border-top-right-radius:${innerR};border-bottom-right-radius:${innerR};opacity:${innerOp};box-sizing:border-box;"></div>`;
+                    }
+                }
+                if (c.side === 'top_bottom') {
+                    html += `<div style="position:absolute;top:${off};left:${off};right:${off};height:${capLen};border-top:${ow}px ${lt} ${col};border-left:${ow}px ${lt} ${col};border-right:${ow}px ${lt} ${col};border-top-left-radius:${rad};border-top-right-radius:${rad};box-sizing:border-box;"></div>`;
+                    html += `<div style="position:absolute;bottom:${off};left:${off};right:${off};height:${capLen};border-bottom:${ow}px ${lt} ${col};border-left:${ow}px ${lt} ${col};border-right:${ow}px ${lt} ${col};border-bottom-left-radius:${rad};border-bottom-right-radius:${rad};box-sizing:border-box;"></div>`;
+                    if (isDoubleLike) {
+                        html += `<div style="position:absolute;top:calc(${off} + ${gap}px);left:calc(${off} + ${gap}px);right:calc(${off} + ${gap}px);height:calc(${capLen} - ${gap}px);border-top:${iw}px ${lt} ${col};border-left:${iw}px ${lt} ${col};border-right:${iw}px ${lt} ${col};border-top-left-radius:${innerR};border-top-right-radius:${innerR};opacity:${innerOp};box-sizing:border-box;"></div>`;
+                        html += `<div style="position:absolute;bottom:calc(${off} + ${gap}px);left:calc(${off} + ${gap}px);right:calc(${off} + ${gap}px);height:calc(${capLen} - ${gap}px);border-bottom:${iw}px ${lt} ${col};border-left:${iw}px ${lt} ${col};border-right:${iw}px ${lt} ${col};border-bottom-left-radius:${innerR};border-bottom-right-radius:${innerR};opacity:${innerOp};box-sizing:border-box;"></div>`;
+                    }
+                }
+                return html;
+            }
+
+            // 3. Tam Çerçeve (4 Kenar) veya Keskin (0px) Düz Şeritler
+            if (isDoubleLike) {
+                const ob = [hasT?`border-top:${ow}px solid ${col};`:'', hasB?`border-bottom:${ow}px solid ${col};`:'', hasL?`border-left:${ow}px solid ${col};`:'', hasR?`border-right:${ow}px solid ${col};`:''].join('');
+                const ib = [hasT?`border-top:${iw}px solid ${col};`:'', hasB?`border-bottom:${iw}px solid ${col};`:'', hasL?`border-left:${iw}px solid ${col};`:'', hasR?`border-right:${iw}px solid ${col};`:''].join('');
+                return `<div style="position:absolute;top:${off};bottom:${off};left:${off};right:${off};${ob}border-radius:${c.side==='all'?rad:'0px'};box-sizing:border-box;"></div>` +
+                       `<div style="position:absolute;top:${hasT?`calc(${off} + ${gap}px)`:off};bottom:${hasB?`calc(${off} + ${gap}px)`:off};left:${hasL?`calc(${off} + ${gap}px)`:off};right:${hasR?`calc(${off} + ${gap}px)`:off};${ib}opacity:${innerOp};border-radius:${c.side==='all'?innerR:'0px'};box-sizing:border-box;"></div>`;
+            }
+
+            const sb = [hasT?`border-top:${w}px ${lt} ${col};`:'', hasB?`border-bottom:${w}px ${lt} ${col};`:'', hasL?`border-left:${w}px ${lt} ${col};`:'', hasR?`border-right:${w}px ${lt} ${col};`:''].join('');
+            return `<div style="position:absolute;top:${off};bottom:${off};left:${off};right:${off};${sb}border-radius:${c.side==='all'?rad:'0px'};box-sizing:border-box;"></div>`;
+        }
+
+        function renderLivePageBorderOverlay() {
+            const ov = document.getElementById('a4PageBorderOverlay');
+            if (ov) ov.innerHTML = buildPageBorderBoxInnerHTML(currentPageBorderConfig);
+        }
+
+        function onPageBorderControlChange(isSlider = false) {
+            syncPageBorderControlsUI({
+                side: document.getElementById('pageBorderSide').value,
+                style: document.getElementById('pageBorderStyle').value,
+                color: document.getElementById('pageBorderColor').value,
+                widthPx: document.getElementById('pageBorderWidth').value,
+                offsetMm: document.getElementById('pageBorderOffset').value,
+                radiusPx: document.getElementById('pageBorderRadius').value,
+                scope: document.getElementById('pageBorderScope').value
+            });
+            renderLivePageBorderOverlay();
+            const key = document.getElementById('templateSelector').value;
+            if (!key || !contractTemplates[key]) persistDataVerified(STORAGE_KEYS.BLANK_BORDER_CFG, currentPageBorderConfig);
+            if (!isSlider) markDocumentModified('Sayfa Çerçevesi Ayarı');
+        }
+
+        function commitPageBorderSnapshot() {
+            markDocumentModified('Sayfa Çerçevesi Boyut/Renk');
+        }
+
+        function syncPageBorderWithAntetColor() {
+            const prof = getActiveProfile();
+            document.getElementById('pageBorderColor').value = document.getElementById('headerBgColor')?.value || prof?.bgColor || '#1e293b';
+            if (currentPageBorderConfig.side === 'none') document.getElementById('pageBorderSide').value = 'all';
+            onPageBorderControlChange(false);
+            showToast('Kenarlık rengi kurumsal antet rengiyle eşitlendi!');
+        }
+
+        function resetPageBorderToNone() {
+            syncPageBorderControlsUI(DEFAULT_PAGE_BORDER_CONFIG);
+            renderLivePageBorderOverlay();
+            persistDataVerified(STORAGE_KEYS.BLANK_BORDER_CFG, currentPageBorderConfig);
+            markDocumentModified('Sayfa Çerçevesini Kaldırma');
+            showToast('Sayfa kenarlığı kaldırıldı.', 'info');
+        }
+
+        function buildDocxPageBordersXML(cfg) {
+            const c = normalizeBorderConfig(cfg);
+            if (c.side === 'none') return '';
+            const hex = parseCssColorToHex6(c.color, '1E293B');
+            const valMap = { solid: 'single', double: 'double', gallery: 'thinThickSmallGap', dashed: 'dashed', corners: 'single' };
+            const wVal = valMap[c.style] || 'single';
+            const szEighths = Math.max(4, Math.min(48, Math.round(c.widthPx * 6)));
+            const spacePt = Math.max(12, Math.min(31, Math.round((15 - c.offsetMm) * 2.8)));
+            const hasT = (c.side === 'all' || c.side === 'top_bottom');
+            const hasB = (c.side === 'all' || c.side === 'top_bottom');
+            const hasL = (c.side === 'all' || c.side === 'left' || c.side === 'left_right');
+            const hasR = (c.side === 'all' || c.side === 'right' || c.side === 'left_right');
+            const scopeAttr = c.scope === 'first' ? ' w:display="firstPage"' : '';
+            return `<w:pgBorders w:offsetFrom="page"${scopeAttr}>` +
+                (hasT ? `<w:top w:val="${wVal}" w:sz="${szEighths}" w:space="${spacePt}" w:color="${hex}"/>` : '') +
+                (hasL ? `<w:left w:val="${wVal}" w:sz="${szEighths}" w:space="${spacePt}" w:color="${hex}"/>` : '') +
+                (hasB ? `<w:bottom w:val="${wVal}" w:sz="${szEighths}" w:space="${spacePt}" w:color="${hex}"/>` : '') +
+                (hasR ? `<w:right w:val="${wVal}" w:sz="${szEighths}" w:space="${spacePt}" w:color="${hex}"/>` : '') +
+                `</w:pgBorders>`;
+        }
+
+        const _origRefreshTemplateDropdown = refreshTemplateDropdown;
+        refreshTemplateDropdown = function(selectKey = null) {
+            const savedEarlyHTML = (!bootFinished && userTypedDuringBoot) ? document.getElementById('a4Document').innerHTML : null;
+            _origRefreshTemplateDropdown(selectKey);
+            const selector = document.getElementById('templateSelector');
+            if (selector && !selector.querySelector('option[value="__BLANK__"]')) {
+                const blankOpt = document.createElement('option');
+                blankOpt.value = '__BLANK__';
+                blankOpt.innerText = '📄 -- Boş Çalışma Sayfası (Sıfırdan Yaz) --';
+                selector.insertBefore(blankOpt, selector.firstChild);
+            }
+            if (selectKey === '__BLANK__' || (activeTemplateId === '__BLANK__' && !selectKey)) {
+                selector.value = '__BLANK__';
+                loadSelectedTemplate();
+            }
+            if (savedEarlyHTML) {
+                document.getElementById('a4Document').innerHTML = savedEarlyHTML;
+                syncSmartPlaceholderVisibility();
+            }
+            bootFinished = true;
+        };
+
+        const _origLoadSelectedTemplate = loadSelectedTemplate;
+        loadSelectedTemplate = function() {
+            const key = document.getElementById('templateSelector').value;
+            if (key === '__BLANK__' || !key || !contractTemplates[key]) {
+                const ed = document.getElementById('a4Document');
+                ed.innerHTML = '<div><br></div>';
+                syncPageBorderControlsUI(safeGetStorage(STORAGE_KEYS.BLANK_BORDER_CFG, DEFAULT_PAGE_BORDER_CONFIG));
+                renderLivePageBorderOverlay();
+                ensureEditorHasEditableLine(false);
+                resetHistoryWithCurrentDOM();
+                syncInputsFromDocument(true);
+                updateLivePageBoundaryGuides();
+                return;
+            }
+            _origLoadSelectedTemplate();
+            syncPageBorderControlsUI(contractTemplates[key].borderConfig || DEFAULT_PAGE_BORDER_CONFIG);
+            renderLivePageBorderOverlay();
+            ensureEditorHasEditableLine(false);
+        };
+
+        const _origUpdateCurrentTemplate = updateCurrentTemplate;
+        updateCurrentTemplate = async function() {
+            const key = document.getElementById('templateSelector').value;
+            if (key && contractTemplates[key]) {
+                contractTemplates[key].borderConfig = normalizeBorderConfig(currentPageBorderConfig);
+            }
+            await _origUpdateCurrentTemplate();
+        };
+
+        const _origRenderVectorPagedPreview = renderVectorPagedPreview;
+        renderVectorPagedPreview = function() {
+            _origRenderVectorPagedPreview();
+            const iframe = document.getElementById('pagedPreviewIframe');
+            const borderHTML = buildPageBorderBoxInnerHTML(currentPageBorderConfig);
+            if (!iframe || !borderHTML) return;
+            const scopeOnlyFirst = currentPageBorderConfig.scope === 'first';
+            const injectScript = `
+                <script>
+                    const _oldAfter = window.PagedConfig.after;
+                    window.PagedConfig.after = function(flow) {
+                        document.querySelectorAll('.pagedjs_page').forEach((pg, idx) => {
+                            if (${scopeOnlyFirst} && idx > 0) return;
+                            pg.style.position = 'relative';
+                            const bWrap = document.createElement('div');
+                            bWrap.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:20;';
+                            bWrap.innerHTML = ${JSON.stringify(borderHTML)};
+                            pg.appendChild(bWrap);
+                        });
+                        if (_oldAfter) _oldAfter(flow);
+                    };
+                <\/script>`;
+            iframe.srcdoc = iframe.srcdoc.replace('</head>', injectScript + '</head>');
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Köşe menüsü değerlerini A4 üzerinde belirgin görünecek ölçeğe yükselt
+            const radSel = document.getElementById('pageBorderRadius');
+            if (radSel) {
+                radSel.innerHTML = `
+                    <option value="0">Köşe: Keskin (0px)</option>
+                    <option value="18">Köşe: Modern Oval (18px)</option>
+                    <option value="34">Köşe: Geniş Kıvrım (34px)</option>
+                `;
+            }
+
+            const ed = document.getElementById('a4Document');
+            ensureEditorHasEditableLine(false);
+            renderLivePageBorderOverlay();
+
+            // Antet, Tablo, QR veya Geri Al gibi her türlü DOM değişiminde silik ipucu yazısını anında gizle
+            const domObserver = new MutationObserver(function() {
+                syncSmartPlaceholderVisibility();
+            });
+            domObserver.observe(ed, { childList: true, subtree: true, characterData: true });
+
+            ed.addEventListener('input', function() {
+                if (!bootFinished) userTypedDuringBoot = true;
+                syncSmartPlaceholderVisibility();
+            });
+            ed.addEventListener('keyup', syncSmartPlaceholderVisibility);
+        });
     </script>
 </body>
 </html>
