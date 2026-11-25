@@ -2450,15 +2450,22 @@
             const slotEmptyClass = hasSlotContent ? '' : 'antet-slot-empty';
             const cleanFontFam = safeCssAttr(opts.fontFamily);
             const gapPx = isColumnStack ? '10px' : '16px';
-            const containerStyle = safeCssAttr(`min-height:${isMinimal ? '60px' : padCfg.minH}; background-color:${containerBg}; ${bgImageCSS} gap:${gapPx}; margin-bottom:16px; ${style3dCSS}`);
+            const flexRulesInline = isColumnStack
+                ? 'display:flex; flex-direction:column; flex-wrap:nowrap; align-items:center; justify-content:center; width:100%; box-sizing:border-box; position:relative; overflow:hidden;'
+                : 'display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; justify-content:space-between; width:100%; box-sizing:border-box; position:relative; overflow:hidden;';
+            const slotRulesInline = hasSlotContent
+                ? `display:flex; flex-direction:row; align-items:center; justify-content:center; flex:0 0 auto; gap:8px; position:relative; z-index:2; order:${logoOrder};`
+                : `display:none; order:${logoOrder};`;
+            const textRulesInline = `flex:1 1 auto; min-width:0; position:relative; z-index:2; order:${textOrder}; text-align:${textAlign}; color:${containerTitleColor}; font-family:${cleanFontFam};`;
+            const containerStyle = safeCssAttr(`${flexRulesInline} min-height:${isMinimal ? '60px' : padCfg.minH}; background-color:${containerBg}; ${bgImageCSS} gap:${gapPx}; margin-bottom:16px; ${style3dCSS}`);
 
-            return `<div id="epa-kurumsal-antet" class="${dirClass}" data-layout="${escapeHTML(opts.layout)}" data-profile-id="${escapeHTML(prof.id)}" contenteditable="false" style="${containerStyle}">
+            return `<div id="epa-kurumsal-antet" class="epa-antet-box ${dirClass}" data-layout="${escapeHTML(opts.layout)}" data-profile-id="${escapeHTML(prof.id)}" contenteditable="false" style="${containerStyle}">
                 ${innerOverlayHTML}
-                <div id="epa-antet-logo-slot" class="${slotEmptyClass}" style="order:${logoOrder};">
+                <div id="epa-antet-logo-slot" class="epa-antet-logo-slot ${slotEmptyClass}" style="${slotRulesInline}">
                     ${logoImgHTML}
                     ${savedQrHTML}
                 </div>
-                <div id="epa-antet-text-slot" style="order:${textOrder}; text-align:${textAlign}; color:${containerTitleColor}; font-family:${cleanFontFam};">
+                <div id="epa-antet-text-slot" class="epa-antet-text-slot" style="${textRulesInline}">
                     ${titleLinesHTML}
                     ${subHTML}
                 </div>
@@ -6473,6 +6480,63 @@
             renderVectorPagedPreview();
         };
 
+        // Eski şablonlardan gelen antet düğümüne Paged.js'in bozamayacağı sınıf ve satır içi flex stillerini sabitler
+        function normalizeAntetNodeForPaged(antetNode, forRepeatingSlot = false) {
+            if (!antetNode) return '';
+            const cloneNode = antetNode.cloneNode(true);
+            const layoutVal = cloneNode.getAttribute('data-layout') || '';
+            const isCol = cloneNode.classList.contains('antet-dir-col') || layoutVal === 'center-all';
+
+            cloneNode.classList.add('epa-antet-box');
+            cloneNode.classList.toggle('antet-dir-col', isCol);
+            cloneNode.classList.toggle('antet-dir-row', !isCol);
+
+            cloneNode.style.display = 'flex';
+            cloneNode.style.flexDirection = isCol ? 'column' : 'row';
+            cloneNode.style.flexWrap = 'nowrap';
+            cloneNode.style.alignItems = 'center';
+            cloneNode.style.justifyContent = isCol ? 'center' : 'space-between';
+            cloneNode.style.width = '100%';
+            cloneNode.style.boxSizing = 'border-box';
+            cloneNode.style.position = 'relative';
+            cloneNode.style.overflow = 'hidden';
+            cloneNode.style.marginBottom = forRepeatingSlot ? '0px' : '16px';
+
+            const logoSlot = cloneNode.querySelector('#epa-antet-logo-slot, .epa-antet-logo-slot');
+            if (logoSlot) {
+                logoSlot.classList.add('epa-antet-logo-slot');
+                const isEmpty = logoSlot.classList.contains('antet-slot-empty') || !logoSlot.querySelector('img');
+                if (isEmpty) {
+                    logoSlot.style.display = 'none';
+                } else {
+                    logoSlot.style.display = 'flex';
+                    logoSlot.style.flexDirection = 'row';
+                    logoSlot.style.alignItems = 'center';
+                    logoSlot.style.justifyContent = 'center';
+                    logoSlot.style.flex = '0 0 auto';
+                    logoSlot.style.gap = '8px';
+                    logoSlot.style.position = 'relative';
+                    logoSlot.style.zIndex = '2';
+                }
+                if (forRepeatingSlot) logoSlot.removeAttribute('id');
+            }
+
+            const textSlot = cloneNode.querySelector('#epa-antet-text-slot, .epa-antet-text-slot');
+            if (textSlot) {
+                textSlot.classList.add('epa-antet-text-slot');
+                textSlot.style.flex = '1 1 auto';
+                textSlot.style.minWidth = '0';
+                textSlot.style.position = 'relative';
+                textSlot.style.zIndex = '2';
+                if (forRepeatingSlot) textSlot.removeAttribute('id');
+            }
+
+            if (forRepeatingSlot) {
+                cloneNode.removeAttribute('id');
+            }
+            return cloneNode.outerHTML;
+        }
+
         renderVectorPagedPreview = function() {
             const iframe = document.getElementById('pagedPreviewIframe');
             const spinner = document.getElementById('pagedLoadingSpinner');
@@ -6488,41 +6552,41 @@
 
             const clone = document.getElementById('a4Document').cloneNode(true);
 
-            // 1. Mevcut kağıt içi anteti ayır ve klondan tamamen kaldır (Çift antet binmesini %100 önler!)
-            const existingAntetEl = clone.querySelector('#epa-kurumsal-antet');
+            // 1. Mevcut kağıt içi anteti ayır ve klondan tamamen kaldır
+            const existingAntetEl = clone.querySelector('#epa-kurumsal-antet, .epa-antet-box');
             const existingQrBox = existingAntetEl ? existingAntetEl.querySelector('.antet-qr-box') : null;
             const savedQrHTML = existingQrBox ? existingQrBox.outerHTML : '';
             if (existingAntetEl) existingAntetEl.remove();
 
-            // 2. İstenen antet HTML'ini hazırla (Kağıtta antet olmasa bile Kayıtlı Antet / Aktif Profilden üretir!)
+            // 2. İstenen antet HTML'ini hazırla ve Paged.js'in #id dönüşümünden etkilenmemesi için sınıf + satır içi flex stillerini kilitle
             let activeHeaderHTML = '';
             let measuredHeaderMm = 26;
 
             if (repeatHeader !== 'none') {
+                let tempHeaderHolder = document.createElement('div');
                 if (antetSource === '__CURRENT__' && existingAntetEl) {
-                    const cleanCloneAntet = existingAntetEl.cloneNode(true);
-                    cleanCloneAntet.style.marginBottom = (repeatHeader === 'all') ? '0px' : '16px';
-                    activeHeaderHTML = cleanCloneAntet.outerHTML;
+                    tempHeaderHolder.appendChild(existingAntetEl.cloneNode(true));
                 } else {
                     const resolved = resolveAntetProfileAndOptions(existingAntetEl, antetSource);
                     if (resolved && resolved.prof) {
-                        activeHeaderHTML = buildCorporateHeaderHTML(resolved.prof, resolved.opts, savedQrHTML);
+                        tempHeaderHolder.innerHTML = buildCorporateHeaderHTML(resolved.prof, resolved.opts, savedQrHTML);
                     }
                 }
 
-                // Antetin gerçek milimetrik yüksekliğini gizli A4 genişliğinde ölç (2. ve 3. sayfada metne binmemesi için)
+                const rawAntetNode = tempHeaderHolder.firstElementChild;
+                if (rawAntetNode) {
+                    activeHeaderHTML = normalizeAntetNodeForPaged(rawAntetNode, repeatHeader === 'all');
+                }
+
+                // Antetin gerçek milimetrik yüksekliğini A4 iç genişliğinde (180mm) ölç
                 if (activeHeaderHTML && repeatHeader === 'all') {
                     const probe = document.createElement('div');
                     probe.style.cssText = 'position:fixed; left:-9999px; top:0; width:180mm; visibility:hidden; pointer-events:none;';
                     probe.innerHTML = activeHeaderHTML;
-                    const probeAntet = probe.querySelector('#epa-kurumsal-antet');
-                    if (probeAntet) probeAntet.style.marginBottom = '0px';
                     document.body.appendChild(probe);
                     const pxH = probe.getBoundingClientRect().height || 90;
                     document.body.removeChild(probe);
                     measuredHeaderMm = Math.ceil(pxH / getPixelsPerMm());
-                    // Her sayfada üst şeritte kullanılacak antetin alt boşluğunu sıfırla
-                    activeHeaderHTML = probe.innerHTML;
                 }
             }
 
@@ -6552,8 +6616,9 @@
             promoteDataTableHeaders(clone);
             ensureSignatureKeepTogether(clone);
 
+            // Sadece 1. Sayfada ile birebir aynı 15mm üst hizayı koru + metin için antet altında net boşluk bırak
             const topMarginMm = (repeatHeader === 'all' && activeHeaderHTML)
-                ? Math.max(34, 14 + measuredHeaderMm + 6)
+                ? Math.max(36, 15 + measuredHeaderMm + 5)
                 : 15;
 
             const bottomRightCSS = autoPageNo
@@ -6605,12 +6670,12 @@
     thead { display: table-header-group; }
     tr { break-inside: avoid; page-break-inside: avoid; }
     td, th { border: 1px solid #64748b; padding: 6.5px 10px; vertical-align: middle; }
-    #epa-kurumsal-antet { display: flex !important; width: 100% !important; box-sizing: border-box !important; position: relative !important; overflow: hidden !important; }
-    #epa-kurumsal-antet.antet-dir-row { flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; }
-    #epa-kurumsal-antet.antet-dir-col { flex-direction: column !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: center !important; }
-    #epa-kurumsal-antet #epa-antet-logo-slot { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important; gap: 8px !important; position: relative !important; z-index: 2 !important; }
-    #epa-kurumsal-antet #epa-antet-logo-slot.antet-slot-empty { display: none !important; }
-    #epa-kurumsal-antet #epa-antet-text-slot { flex: 1 1 auto !important; min-width: 0 !important; position: relative !important; z-index: 2 !important; }
+    .epa-antet-box, #epa-kurumsal-antet { display: flex !important; width: 100% !important; box-sizing: border-box !important; position: relative !important; overflow: hidden !important; }
+    .epa-antet-box.antet-dir-row, #epa-kurumsal-antet.antet-dir-row { flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; }
+    .epa-antet-box.antet-dir-col, #epa-kurumsal-antet.antet-dir-col { flex-direction: column !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: center !important; }
+    .epa-antet-logo-slot, #epa-kurumsal-antet #epa-antet-logo-slot { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important; gap: 8px !important; position: relative !important; z-index: 2 !important; }
+    .epa-antet-logo-slot.antet-slot-empty, #epa-kurumsal-antet #epa-antet-logo-slot.antet-slot-empty { display: none !important; }
+    .epa-antet-text-slot, #epa-kurumsal-antet #epa-antet-text-slot { flex: 1 1 auto !important; min-width: 0 !important; position: relative !important; z-index: 2 !important; }
     .signature-block, .keep-together { break-inside: avoid; page-break-inside: avoid; }
     .forced-page-break { break-before: page; page-break-before: always; height: 0; }
 </style>
@@ -6622,16 +6687,26 @@
     window.PagedConfig = {
         auto: true,
         after: function(flow) {
+            // Paged.js CSS Polisher sonradan eklenen düğümleri ezmesin diye saf koruma stilini ekle
+            const lockStyle = document.createElement('style');
+            lockStyle.textContent = \`
+                .epa-antet-box { display: flex !important; width: 100% !important; box-sizing: border-box !important; position: relative !important; overflow: hidden !important; }
+                .epa-antet-box.antet-dir-row { flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; }
+                .epa-antet-box.antet-dir-col { flex-direction: column !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: center !important; }
+                .epa-antet-logo-slot { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important; gap: 8px !important; position: relative !important; z-index: 2 !important; }
+                .epa-antet-logo-slot.antet-slot-empty { display: none !important; }
+                .epa-antet-text-slot { flex: 1 1 auto !important; min-width: 0 !important; position: relative !important; z-index: 2 !important; }
+            \`;
+            document.head.appendChild(lockStyle);
+
             document.querySelectorAll('.pagedjs_page').forEach((pg, idx) => {
                 pg.style.position = 'relative';
-                // 1) Her Sayfada Tekrarla seçiliyse her .pagedjs_page'in üst boşluğuna tek ve net antet yerleştir (Çift antet imkansız!)
                 if (INJECT_HEADER_HTML) {
                     const hdrSlot = document.createElement('div');
-                    hdrSlot.style.cssText = 'position:absolute; top:12mm; left:15mm; right:15mm; z-index:18; pointer-events:none;';
+                    hdrSlot.style.cssText = 'position:absolute; top:15mm; left:15mm; right:15mm; z-index:18; pointer-events:none;';
                     hdrSlot.innerHTML = INJECT_HEADER_HTML;
                     pg.appendChild(hdrSlot);
                 }
-                // 2) Sayfa Kenarlığı / Modern Çerçeve varsa sayfaya yerleştir
                 if (INJECT_BORDER_HTML && (!BORDER_ONLY_FIRST || idx === 0)) {
                     const bWrap = document.createElement('div');
                     bWrap.style.cssText = 'position:absolute; inset:0; pointer-events:none; z-index:20;';
