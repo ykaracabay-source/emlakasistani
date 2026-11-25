@@ -98,29 +98,49 @@
             text-align: left;
             position: relative;
             border-radius: 4px;
-        }
-        .a4-paper {
             -webkit-user-select: text !important;
             user-select: text !important;
             cursor: text;
         }
-        .a4-paper * { -webkit-user-select: text; user-select: text; }
-        .a4-paper [contenteditable="false"] { -webkit-user-select: none; user-select: none; }
+        .a4-paper * {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        .a4-paper [contenteditable="false"] {
+            -webkit-user-select: none;
+            user-select: none;
+        }
         .a4-paper:focus { outline: none; }
 
+        /* İmleci Engellemeyen Akıllı Arka Plan İpucu Katmanı */
         #a4SmartPlaceholder {
             position: absolute;
-            top: 15mm; left: 15mm; right: 15mm;
-            color: #94a3b8; font-style: italic;
-            font-family: 'Inter', sans-serif; font-size: 10.5pt;
-            line-height: 1.5; pointer-events: none; user-select: none; z-index: 5;
+            top: 15mm;
+            left: 15mm;
+            right: 15mm;
+            color: #94a3b8;
+            font-style: italic;
+            font-family: 'Inter', sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.5;
+            pointer-events: none;
+            user-select: none;
+            z-index: 5;
+            transition: opacity 0.15s ease;
         }
-        #a4SmartPlaceholder.hidden-ph { opacity: 0; visibility: hidden; }
+        #a4SmartPlaceholder.hidden-ph {
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
 
+        /* Canlı A4 Sayfa Kenarlığı & Modern Çerçeve Katmanı */
         #a4PageBorderOverlay {
-            position: absolute; inset: 0;
-            pointer-events: none; z-index: 20;
-            overflow: hidden; border-radius: 4px;
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 20;
+            overflow: hidden;
+            border-radius: 4px;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
@@ -312,7 +332,7 @@
         }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden text-slate-800"></body>
+<body class="h-screen flex flex-col overflow-hidden text-slate-800">
 
     <!-- 100MM KALİBRASYON CETVELİ (Piksel -> Milimetre dönüşümü için) -->
     <div id="mmCalibrator" style="position:fixed; left:-9999px; top:-9999px; height:100mm; width:1mm; pointer-events:none;"></div>
@@ -352,7 +372,7 @@
     </div>
 
     <!-- 1. ÜST BAŞLIK & KALICI GERİ AL / İLERİ AL ÇUBUĞU -->
-    <header id="topAppHeader" class="bg-white border-b border-slate-200 px-5 py-2.5 flex flex-wrap justify-between items-center gap-3 shadow-sm z-20 shrink-0">
+    <header id="topAppHeader" class="select-none bg-white border-b border-slate-200 px-5 py-2.5 flex flex-wrap justify-between items-center gap-3 shadow-sm z-20 shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-indigo-900 text-white flex items-center justify-center shadow-sm text-lg">
                 <i class="fa-solid fa-file-signature"></i>
@@ -428,7 +448,7 @@
             <!-- Şablon Yükleme ve Kaydetme İşlemleri -->
             <div class="space-y-1.5 hide-in-focus pt-1 border-t border-slate-100">
                 <div class="grid grid-cols-5 gap-1.5">
-                    <button onclick="startFreshBlankPage(true)" class="col-span-2 bg-slate-800 hover:bg-slate-900 text-white text-[11.5px] font-extrabold py-2.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 shadow-xs transition" title="Dosya yüklemeden tertemiz boş A4 sayfası açar">
+                    <button onclick="startFreshBlankPage(true)" class="col-span-2 bg-slate-800 hover:bg-slate-900 text-white text-[11.5px] font-extrabold py-2.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 shadow-xs transition" title="Dosya yüklemeden tertemiz boş A4 sayfası açar (Varsayılan antetiniz açıksa otomatik eklenir)">
                         <i class="fa-solid fa-file-pen text-amber-300"></i> <span>Yeni Boş Sayfa</span>
                     </button>
                     <button onclick="openImportModal()" class="col-span-3 bg-indigo-600 hover:bg-indigo-700 text-white text-[11.5px] font-bold py-2.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 shadow-xs transition">
@@ -506,7 +526,7 @@
         <main id="rightPreviewPane" class="flex-1 bg-slate-600 overflow-y-auto flex flex-col items-center relative">
 
             <!-- YAPIŞKAN STÜDYO ARAÇ ÇUBUĞU -->
-            <div id="studioToolbarWrapper" class="sticky top-0 z-40 w-full bg-white shadow-md border-b border-slate-200 no-print">
+            <div id="studioToolbarWrapper" class="select-none sticky top-0 z-40 w-full bg-white shadow-md border-b border-slate-200 no-print">
                 <div class="flex justify-between items-center bg-slate-100 px-4 pt-2 border-b-2 border-indigo-600 overflow-x-auto gap-2">
                     <div class="flex gap-1.5">
                         <button id="btn-tab-etiket" onclick="switchStudioTab('tab-etiket')" class="studio-tab-btn px-3.5 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 whitespace-nowrap bg-indigo-600 text-white transition">
@@ -519,7 +539,7 @@
                             <i class="fa-solid fa-pen-nib"></i> 3. Metin Düzeni
                         </button>
                         <button id="btn-tab-kurumsal" onclick="switchStudioTab('tab-kurumsal')" class="studio-tab-btn px-3.5 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 whitespace-nowrap bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
-                            <i class="fa-solid fa-building-flag"></i> 4. Kurumsal Kimlik
+                            <i class="fa-solid fa-building-flag"></i> 4. Kurumsal Kimlik &amp; Kayıtlı Antetler
                         </button>
                         <button id="btn-tab-cerceve" onclick="switchStudioTab('tab-cerceve')" class="studio-tab-btn px-3.5 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 whitespace-nowrap bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
                             <i class="fa-solid fa-border-all"></i> 5. Sayfa Kenarlığı &amp; Çerçeve
@@ -806,10 +826,45 @@
                             </select>
                         </div>
                     </div>
+
+                    <!-- 3. Satır: KAYITLI ANTET ŞABLONLARI & VARSAYILAN OTOMATİK ANTET YÖNETİCİSİ -->
+                    <div class="w-full max-w-6xl flex flex-wrap justify-center items-center gap-1.5 bg-amber-50/70 border border-amber-200/90 rounded-lg px-3 py-1.5 text-[11px]">
+                        <span class="font-extrabold text-amber-900 flex items-center gap-1">
+                            <i class="fa-solid fa-bookmark text-amber-600"></i> Kayıtlı Antet Şablonları:
+                        </span>
+                        <select id="savedAntetTemplateSelector" onchange="onSelectSavedAntetTemplate(this.value)" class="text-xs font-bold text-slate-800 bg-white border border-amber-300 rounded px-2.5 py-1 min-w-[215px] focus:outline-none focus:border-amber-600">
+                            <option value="">-- Kayıtlı Antet Seçin veya Kaydedin --</option>
+                        </select>
+
+                        <button type="button" onclick="openSaveAntetTemplateModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1 rounded transition flex items-center gap-1" title="Mevcut antet tasarımınızı (renk, 3B stil, punto, logo ölçeği) isimlendirerek şablon olarak kaydeder">
+                            <i class="fa-solid fa-floppy-disk"></i> Antet Şablonu Kaydet
+                        </button>
+                        <button type="button" onclick="overwriteSelectedAntetTemplate()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-2 py-1 rounded transition flex items-center gap-1" title="Seçili kayıtlı antet şablonunu şu anki ayarlarla günceller">
+                            <i class="fa-solid fa-arrows-rotate"></i> Güncelle
+                        </button>
+                        <button type="button" id="btnToggleDefaultAntet" onclick="toggleDefaultAutoAntet()" class="bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold px-2.5 py-1 rounded transition flex items-center gap-1" title="İşaretlendiğinde yeni açılan boş sayfalara ve yüklenen Word sözleşmelerine bu anteti otomatik uygular">
+                            <i class="fa-regular fa-star text-amber-500"></i> <span id="lblDefaultAntetBtn">Varsayılan Yap</span>
+                        </button>
+                        <button type="button" onclick="deleteSelectedAntetTemplate()" class="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 font-bold px-2 py-1 rounded transition" title="Seçili Antet Şablonunu Sil">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+
+                        <div class="h-4 w-px bg-amber-300 mx-1 hidden sm:block"></div>
+
+                        <!-- Bu Evrakta Antet Açık/Kapalı Hızlı Anahtarı + Sayfa Tekrar Modu -->
+                        <button type="button" id="btnDocAntetSwitch" onclick="toggleCurrentDocAntetSwitch()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded transition flex items-center gap-1" title="Bu evrakta anteti tek tıkla açar veya gizler">
+                            <i class="fa-solid fa-toggle-on"></i> <span id="lblDocAntetSwitch">Bu Evrakta Antet: Açık</span>
+                        </button>
+                        <select id="docHeaderRepeatSelect" onchange="onChangeDocHeaderRepeatMode(this.value)" class="text-[11px] font-bold text-slate-800 bg-white border border-amber-300 rounded px-2 py-1" title="PDF ve Word (.docx) çıktılarında antetin hangi sayfalarda yer alacağını belirler">
+                            <option value="first" selected>Çıktı: Sadece 1. Sayfada</option>
+                            <option value="all">Çıktı: Her Sayfada Tekrarla</option>
+                            <option value="none">Çıktı: Antetsiz (Gizle)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- SEKME 5: SAYFA KENARLIĞI & MODERN ÇERÇEVE STÜDYOSU -->
-                <div id="tab-cerceve" class="studio-tab-pane hidden px-4 py-2 flex-col items-center gap-1.5 bg-white select-none">
+                <div id="tab-cerceve" class="studio-tab-pane hidden px-4 py-2 flex-col items-center gap-1.5 bg-white">
                     <div class="w-full max-w-6xl flex flex-wrap justify-center items-center gap-2 text-xs">
                         <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
                             <span class="text-[11px] font-extrabold text-slate-700"><i class="fa-solid fa-border-top-left text-indigo-600 mr-1"></i>Yön:</span>
@@ -849,8 +904,8 @@
                             </label>
                             <select id="pageBorderRadius" onchange="onPageBorderControlChange(false)" class="text-[11px] bg-white border border-slate-300 rounded px-2 py-1 font-semibold text-slate-700">
                                 <option value="0" selected>Köşe: Keskin (0px)</option>
-                                <option value="8">Köşe: Modern Oval (8px)</option>
-                                <option value="14">Köşe: Yumuşak (14px)</option>
+                                <option value="18">Köşe: Modern Oval (18px)</option>
+                                <option value="34">Köşe: Geniş Kıvrım (34px)</option>
                             </select>
                             <select id="pageBorderScope" onchange="onPageBorderControlChange(false)" class="text-[11px] bg-white border border-slate-300 rounded px-2 py-1 font-semibold text-slate-700">
                                 <option value="all" selected>Tüm Sayfalarda</option>
@@ -1178,10 +1233,18 @@
 
             <div class="flex flex-wrap items-center gap-2.5 text-xs">
                 <div class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5">
-                    <span class="text-slate-400 font-semibold">Antet:</span>
-                    <select id="printRepeatHeaderMode" onchange="renderVectorPagedPreview()" class="bg-slate-900 text-white font-bold rounded px-2 py-0.5 border border-slate-600 focus:outline-none">
+                    <span class="text-amber-300 font-bold"><i class="fa-solid fa-bookmark mr-1"></i>Antet Şablonu:</span>
+                    <select id="printAntetSourceSelect" onchange="renderVectorPagedPreview()" class="bg-slate-900 text-white font-bold rounded px-2 py-0.5 border border-slate-600 max-w-[200px] focus:outline-none">
+                        <option value="__CURRENT__">Kağıttaki / Aktif Antet</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5">
+                    <span class="text-slate-400 font-semibold">Konum:</span>
+                    <select id="printRepeatHeaderMode" onchange="onChangePrintRepeatMode(this.value)" class="bg-slate-900 text-white font-bold rounded px-2 py-0.5 border border-slate-600 focus:outline-none">
                         <option value="first" selected>Sadece 1. Sayfada</option>
                         <option value="all">Her Sayfada Tekrarla</option>
+                        <option value="none">Antetsiz (Gizle)</option>
                     </select>
                 </div>
 
@@ -3947,7 +4010,7 @@
                     const html = serializeCurrentEditorAsTemplateHTML();
                     const id = 'sablon_' + Date.now();
                     const nowStamp = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-                    contractTemplates[id] = { ad: name, icerik: html, updatedAt: nowStamp, borderConfig: normalizeBorderConfig(currentPageBorderConfig) };
+                    contractTemplates[id] = { ad: name, icerik: html, updatedAt: nowStamp, borderConfig: normalizeBorderConfig(currentPageBorderConfig), headerRepeatMode: currentDocHeaderRepeatMode };
                     activeTemplateId = id;
 
                     await persistDataVerified(STORAGE_KEYS.PROFILES, corporateProfiles);
@@ -4812,114 +4875,154 @@
                     return 'left';
                 }
 
-                // 2. Kurumsal Antet (#epa-kurumsal-antet) OpenXML Dönüşümü
+                // 2. Kurumsal Antet (#epa-kurumsal-antet veya Kayıtlı Antet Şablonu) OpenXML Dönüşümü
                 const bodyPartsXML = [];
+                let headerPartXMLContent = '';
+                const headerMediaItems = [];
+                let hdrImgCounter = 0;
+
+                async function registerHeaderImageBytes(pngInfo) {
+                    if (!pngInfo || !pngInfo.bytes) return null;
+                    hdrImgCounter++;
+                    const rId = `rIdHdrImg${hdrImgCounter}`;
+                    const fileName = `hdr_image${hdrImgCounter}.png`;
+                    headerMediaItems.push({ rId, fileName, bytes: pngInfo.bytes, docPrId: 500 + hdrImgCounter });
+                    return {
+                        rId,
+                        docPrId: 500 + hdrImgCounter,
+                        cx: Math.round(pngInfo.widthPx * 9525),
+                        cy: Math.round(pngInfo.heightPx * 9525)
+                    };
+                }
+
+                const repeatModeForWord = (typeof getEffectiveDocHeaderRepeatMode === 'function')
+                    ? getEffectiveDocHeaderRepeatMode()
+                    : 'first';
+
                 const antetEl = clone.querySelector('#epa-kurumsal-antet');
-                if (antetEl) {
-                    const profId = antetEl.getAttribute('data-profile-id');
-                    const prof = (profId && corporateProfiles[profId]) ? corporateProfiles[profId] : getActiveProfile();
-                    const pinnedQrImgEl = antetEl.querySelector('.antet-qr-box img');
-                    const pinnedQrSrc = pinnedQrImgEl ? pinnedQrImgEl.getAttribute('src') : '';
+                const pinnedQrImgEl = antetEl ? antetEl.querySelector('.antet-qr-box img') : null;
+                const pinnedQrSrc = pinnedQrImgEl ? pinnedQrImgEl.getAttribute('src') : '';
 
-                    if (prof) {
-                        const opts = readToolbarDesignOptions(prof);
-                        if (opts.wordHeaderMode === 'highres_banner') {
-                            // Mod B: 300 DPI Yüksek Çözünürlüklü 3B Görsel Başlık
-                            const bannerPng = await renderCorporateHeader300DpiPNG(prof, opts, pinnedQrSrc);
-                            const regBanner = await registerImageBytes(bannerPng);
-                            if (regBanner) {
-                                bodyPartsXML.push(`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="180"/></w:pPr>${buildDrawingRunXML(regBanner)}</w:p>`);
-                            }
+                // Antet kaynağını belirle: Kağıtta antet varsa onu, yoksa Kayıtlı Antet / Aktif Profil kaynağını al
+                const resolvedAntetData = (typeof resolveAntetProfileAndOptions === 'function')
+                    ? resolveAntetProfileAndOptions(antetEl, '__CURRENT__')
+                    : null;
+
+                if (antetEl) antetEl.remove();
+
+                if (repeatModeForWord !== 'none' && resolvedAntetData && resolvedAntetData.prof) {
+                    const prof = resolvedAntetData.prof;
+                    const opts = resolvedAntetData.opts;
+                    const useRunningWordHeader = (repeatModeForWord === 'all');
+                    const imgRegFn = useRunningWordHeader ? registerHeaderImageBytes : registerImageBytes;
+
+                    let generatedAntetOOXML = '';
+                    if (opts.wordHeaderMode === 'highres_banner') {
+                        const bannerPng = await renderCorporateHeader300DpiPNG(prof, opts, pinnedQrSrc);
+                        const regBanner = await imgRegFn(bannerPng);
+                        if (regBanner) {
+                            generatedAntetOOXML = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="140"/></w:pPr>${buildDrawingRunXML(regBanner)}</w:p>`;
+                        }
+                    } else {
+                        const isMinimal = opts.layout === 'minimal-line';
+                        const fillHex = isMinimal ? 'FFFFFF' : (parseCssColorToHex6(opts.bgColor, '1E293B'));
+                        const txtHex = isMinimal ? '0F172A' : (parseCssColorToHex6(opts.textColor, 'FFFFFF'));
+                        const accentHex = parseCssColorToHex6(opts.bgColor2, fillHex);
+                        const titleLines = formatProfileUnvanLines(prof);
+                        const contactStr = getProfileContactString(prof, opts.contactMode);
+                        const fontClean = cleanFontName(opts.fontFamily);
+
+                        const logoMaxW = opts.logoSizePx || 140;
+                        const logoMaxH = Math.max(36, Math.round(logoMaxW * 0.52));
+                        const regLogo = prof.logo ? await imgRegFn(await rasterizeImageForWord(prof.logo, logoMaxW, logoMaxH, !!opts.logoBadge && !isMinimal)) : null;
+                        const regQr = pinnedQrSrc ? await imgRegFn(await rasterizeImageForWord(pinnedQrSrc, 52, 52, true)) : null;
+
+                        const padTwipMap = { compact: 120, normal: 180, wide: 250, tall: 320 };
+                        const padV = isMinimal ? 100 : (padTwipMap[opts.paddingMode] || 180);
+
+                        let topBdr = `<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
+                        let leftBdr = `<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
+                        let rightBdr = `<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
+                        let bottomBdr = `<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
+
+                        if (isMinimal) {
+                            bottomBdr = `<w:bottom w:val="single" w:sz="18" w:space="0" w:color="${parseCssColorToHex6(opts.bgColor, '1E293B')}"/>`;
                         } else {
-                            // Mod A (Varsayılan): Gizli Kenarlıklı 2 Hücreli Sabit Word Tablosu (Kilitli PNG Logo + Çok Satırlı Unvan)
-                            const isMinimal = opts.layout === 'minimal-line';
-                            const fillHex = isMinimal ? 'FFFFFF' : (parseCssColorToHex6(opts.bgColor, '1E293B'));
-                            const txtHex = isMinimal ? '0F172A' : (parseCssColorToHex6(opts.textColor, 'FFFFFF'));
-                            const accentHex = parseCssColorToHex6(opts.bgColor2, fillHex);
-                            const titleLines = formatProfileUnvanLines(prof);
-                            const contactStr = getProfileContactString(prof, opts.contactMode);
-                            const fontClean = cleanFontName(opts.fontFamily);
-
-                            const logoMaxW = opts.logoSizePx || 140;
-                            const logoMaxH = Math.max(36, Math.round(logoMaxW * 0.52));
-                            const regLogo = prof.logo ? await registerImageBytes(await rasterizeImageForWord(prof.logo, logoMaxW, logoMaxH, !!opts.logoBadge && !isMinimal)) : null;
-                            const regQr = pinnedQrSrc ? await registerImageBytes(await rasterizeImageForWord(pinnedQrSrc, 52, 52, true)) : null;
-
-                            const padTwipMap = { compact: 120, normal: 180, wide: 250, tall: 320 };
-                            const padV = isMinimal ? 100 : (padTwipMap[opts.paddingMode] || 180);
-
-                            let topBdr = `<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
-                            let leftBdr = `<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
-                            let rightBdr = `<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
-                            let bottomBdr = `<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
-
-                            if (isMinimal) {
-                                bottomBdr = `<w:bottom w:val="single" w:sz="18" w:space="0" w:color="${parseCssColorToHex6(opts.bgColor, '1E293B')}"/>`;
-                            } else {
-                                if (opts.style3d === 'double_frame') {
-                                    const frmHex = isLightHexColor('#' + fillHex) ? '475569' : 'CBD5E1';
-                                    topBdr = `<w:top w:val="double" w:sz="6" w:space="0" w:color="${frmHex}"/>`;
-                                    leftBdr = `<w:left w:val="double" w:sz="6" w:space="0" w:color="${frmHex}"/>`;
-                                    rightBdr = `<w:right w:val="double" w:sz="6" w:space="0" w:color="${frmHex}"/>`;
-                                    bottomBdr = `<w:bottom w:val="double" w:sz="6" w:space="0" w:color="${frmHex}"/>`;
-                                }
-                                if (opts.accentBar === 'bottom') {
-                                    bottomBdr = `<w:bottom w:val="single" w:sz="24" w:space="0" w:color="${accentHex}"/>`;
-                                } else if (opts.accentBar === 'left') {
-                                    leftBdr = `<w:left w:val="single" w:sz="30" w:space="0" w:color="${accentHex}"/>`;
-                                }
+                            if (opts.style3d === 'double_frame') {
+                                const frmHex = isLightHexColor('#' + fillHex) ? '475569' : 'CBD5E1';
+                                topBdr = `<w:top w:val="double" w:sz="6" w:space="0" w:color="${frmHex}"/>`;
+                                leftBdr = `<w:left w:val="double" w:sz="6" w:space="0" w:color="${frmHex}"/>`;
+                                rightBdr = `<w:right w:val="double" w:sz="6" w:space="0" w:color="${frmHex}"/>`;
+                                bottomBdr = `<w:bottom w:val="double" w:sz="6" w:space="0" w:color="${frmHex}"/>`;
                             }
-
-                            const tblBordersXML = `<w:tblBorders>${topBdr}${leftBdr}${bottomBdr}${rightBdr}<w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/></w:tblBorders>`;
-                            const cellMarXML = `<w:tblCellMar><w:top w:w="${padV}" w:type="dxa"/><w:left w:w="220" w:type="dxa"/><w:bottom w:w="${padV}" w:type="dxa"/><w:right w:w="220" w:type="dxa"/></w:tblCellMar>`;
-
-                            let alignOOXML = 'right';
-                            if (opts.layout === 'text-left-logo-right') alignOOXML = 'left';
-                            else if (opts.layout === 'text-center-logo-right' || opts.layout === 'logo-left-text-center' || opts.layout === 'center-all') alignOOXML = 'center';
-
-                            const lineSpacingTwips = Math.round((opts.titleLineHeight || 1.25) * 240);
-                            const textParasXML = titleLines.map((ln, idx) => {
-                                const px = (idx === 0 && prof.firstLineBig && titleLines.length > 1) ? (opts.titleFontSize + 2) : opts.titleFontSize;
-                                const halfPt = Math.round(px * 1.5);
-                                return `<w:p><w:pPr><w:jc w:val="${alignOOXML}"/><w:spacing w:before="0" w:after="20" w:line="${lineSpacingTwips}" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="${xmlEscapeText(fontClean)}" w:hAnsi="${xmlEscapeText(fontClean)}" w:cs="${xmlEscapeText(fontClean)}"/><w:b/><w:color w:val="${txtHex}"/><w:sz w:val="${halfPt}"/><w:szCs w:val="${halfPt}"/></w:rPr><w:t xml:space="preserve">${xmlEscapeText(ln)}</w:t></w:r></w:p>`;
-                            }).join('');
-
-                            const subHalfPt = Math.round((opts.subFontSize || 12) * 1.5);
-                            const subParaXML = contactStr
-                                ? `<w:p><w:pPr><w:jc w:val="${alignOOXML}"/><w:spacing w:before="40" w:after="0"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="${txtHex}"/><w:sz w:val="${subHalfPt}"/><w:szCs w:val="${subHalfPt}"/></w:rPr><w:t xml:space="preserve">${xmlEscapeText(contactStr)}</w:t></w:r></w:p>`
-                                : '';
-
-                            const hasLogoSlot = !!(regLogo || regQr);
-                            const logoRuns = [
-                                regLogo ? buildDrawingRunXML(regLogo) : '',
-                                (regLogo && regQr) ? `<w:r><w:t xml:space="preserve">  </w:t></w:r>` : '',
-                                regQr ? buildDrawingRunXML(regQr) : ''
-                            ].join('');
-
-                            if (opts.layout === 'center-all' || !hasLogoSlot) {
-                                const centerLogoPara = hasLogoSlot
-                                    ? `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="100"/></w:pPr>${logoRuns}</w:p>`
-                                    : '';
-                                bodyPartsXML.push(`<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblLayout w:type="fixed"/>${tblBordersXML}${cellMarXML}</w:tblPr><w:tblGrid><w:gridCol w:w="10206"/></w:tblGrid><w:tr><w:trPr><w:cantSplit/></w:trPr><w:tc><w:tcPr><w:tcW w:w="10206" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${fillHex}"/><w:vAlign w:val="center"/></w:tcPr>${centerLogoPara}${textParasXML || '<w:p/>'}${subParaXML}</w:tc></w:tr></w:tbl><w:p><w:pPr><w:spacing w:before="0" w:after="120"/></w:pPr></w:p>`);
-                            } else {
-                                const logoWTwips = Math.min(4400, Math.max(2400, Math.round((logoMaxW + (regQr ? 68 : 24)) * 15)));
-                                const textWTwips = 10206 - logoWTwips;
-                                const logoOnRight = (opts.layout === 'text-left-logo-right' || opts.layout === 'text-center-logo-right');
-                                const logoAlign = logoOnRight ? 'right' : 'left';
-
-                                const logoCellXML = `<w:tc><w:tcPr><w:tcW w:w="${logoWTwips}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${fillHex}"/><w:vAlign w:val="center"/></w:tcPr><w:p><w:pPr><w:jc w:val="${logoAlign}"/><w:spacing w:before="0" w:after="0"/></w:pPr>${logoRuns}</w:p></w:tc>`;
-                                const textCellXML = `<w:tc><w:tcPr><w:tcW w:w="${textWTwips}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${fillHex}"/><w:vAlign w:val="center"/></w:tcPr>${textParasXML || '<w:p/>'}${subParaXML}</w:tc>`;
-
-                                const gridColsXML = logoOnRight
-                                    ? `<w:gridCol w:w="${textWTwips}"/><w:gridCol w:w="${logoWTwips}"/>`
-                                    : `<w:gridCol w:w="${logoWTwips}"/><w:gridCol w:w="${textWTwips}"/>`;
-                                const cellsOrdered = logoOnRight ? (textCellXML + logoCellXML) : (logoCellXML + textCellXML);
-
-                                bodyPartsXML.push(`<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblLayout w:type="fixed"/>${tblBordersXML}${cellMarXML}</w:tblPr><w:tblGrid>${gridColsXML}</w:tblGrid><w:tr><w:trPr><w:cantSplit/></w:trPr>${cellsOrdered}</w:tr></w:tbl><w:p><w:pPr><w:spacing w:before="0" w:after="120"/></w:pPr></w:p>`);
+                            if (opts.accentBar === 'bottom') {
+                                bottomBdr = `<w:bottom w:val="single" w:sz="24" w:space="0" w:color="${accentHex}"/>`;
+                            } else if (opts.accentBar === 'left') {
+                                leftBdr = `<w:left w:val="single" w:sz="30" w:space="0" w:color="${accentHex}"/>`;
                             }
                         }
+
+                        const tblBordersXML = `<w:tblBorders>${topBdr}${leftBdr}${bottomBdr}${rightBdr}<w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/></w:tblBorders>`;
+                        const cellMarXML = `<w:tblCellMar><w:top w:w="${padV}" w:type="dxa"/><w:left w:w="220" w:type="dxa"/><w:bottom w:w="${padV}" w:type="dxa"/><w:right w:w="220" w:type="dxa"/></w:tblCellMar>`;
+
+                        let alignOOXML = 'right';
+                        if (opts.layout === 'text-left-logo-right') alignOOXML = 'left';
+                        else if (opts.layout === 'text-center-logo-right' || opts.layout === 'logo-left-text-center' || opts.layout === 'center-all') alignOOXML = 'center';
+
+                        const lineSpacingTwips = Math.round((opts.titleLineHeight || 1.25) * 240);
+                        const textParasXML = titleLines.map((ln, idx) => {
+                            const px = (idx === 0 && prof.firstLineBig && titleLines.length > 1) ? (opts.titleFontSize + 2) : opts.titleFontSize;
+                            const halfPt = Math.round(px * 1.5);
+                            return `<w:p><w:pPr><w:jc w:val="${alignOOXML}"/><w:spacing w:before="0" w:after="20" w:line="${lineSpacingTwips}" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="${xmlEscapeText(fontClean)}" w:hAnsi="${xmlEscapeText(fontClean)}" w:cs="${xmlEscapeText(fontClean)}"/><w:b/><w:color w:val="${txtHex}"/><w:sz w:val="${halfPt}"/><w:szCs w:val="${halfPt}"/></w:rPr><w:t xml:space="preserve">${xmlEscapeText(ln)}</w:t></w:r></w:p>`;
+                        }).join('');
+
+                        const subHalfPt = Math.round((opts.subFontSize || 12) * 1.5);
+                        const subParaXML = contactStr
+                            ? `<w:p><w:pPr><w:jc w:val="${alignOOXML}"/><w:spacing w:before="40" w:after="0"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="${txtHex}"/><w:sz w:val="${subHalfPt}"/><w:szCs w:val="${subHalfPt}"/></w:rPr><w:t xml:space="preserve">${xmlEscapeText(contactStr)}</w:t></w:r></w:p>`
+                            : '';
+
+                        const hasLogoSlot = !!(regLogo || regQr);
+                        const logoRuns = [
+                            regLogo ? buildDrawingRunXML(regLogo) : '',
+                            (regLogo && regQr) ? `<w:r><w:t xml:space="preserve">  </w:t></w:r>` : '',
+                            regQr ? buildDrawingRunXML(regQr) : ''
+                        ].join('');
+
+                        if (opts.layout === 'center-all' || !hasLogoSlot) {
+                            const centerLogoPara = hasLogoSlot
+                                ? `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="100"/></w:pPr>${logoRuns}</w:p>`
+                                : '';
+                            generatedAntetOOXML = `<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblLayout w:type="fixed"/>${tblBordersXML}${cellMarXML}</w:tblPr><w:tblGrid><w:gridCol w:w="10206"/></w:tblGrid><w:tr><w:trPr><w:cantSplit/></w:trPr><w:tc><w:tcPr><w:tcW w:w="10206" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${fillHex}"/><w:vAlign w:val="center"/></w:tcPr>${centerLogoPara}${textParasXML || '<w:p/>'}${subParaXML}</w:tc></w:tr></w:tbl><w:p><w:pPr><w:spacing w:before="0" w:after="100"/></w:pPr></w:p>`;
+                        } else {
+                            const logoWTwips = Math.min(4400, Math.max(2400, Math.round((logoMaxW + (regQr ? 68 : 24)) * 15)));
+                            const textWTwips = 10206 - logoWTwips;
+                            const logoOnRight = (opts.layout === 'text-left-logo-right' || opts.layout === 'text-center-logo-right');
+                            const logoAlign = logoOnRight ? 'right' : 'left';
+
+                            const logoCellXML = `<w:tc><w:tcPr><w:tcW w:w="${logoWTwips}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${fillHex}"/><w:vAlign w:val="center"/></w:tcPr><w:p><w:pPr><w:jc w:val="${logoAlign}"/><w:spacing w:before="0" w:after="0"/></w:pPr>${logoRuns}</w:p></w:tc>`;
+                            const textCellXML = `<w:tc><w:tcPr><w:tcW w:w="${textWTwips}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${fillHex}"/><w:vAlign w:val="center"/></w:tcPr>${textParasXML || '<w:p/>'}${subParaXML}</w:tc>`;
+
+                            const gridColsXML = logoOnRight
+                                ? `<w:gridCol w:w="${textWTwips}"/><w:gridCol w:w="${logoWTwips}"/>`
+                                : `<w:gridCol w:w="${logoWTwips}"/><w:gridCol w:w="${textWTwips}"/>`;
+                            const cellsOrdered = logoOnRight ? (textCellXML + logoCellXML) : (logoCellXML + textCellXML);
+
+                            generatedAntetOOXML = `<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblLayout w:type="fixed"/>${tblBordersXML}${cellMarXML}</w:tblPr><w:tblGrid>${gridColsXML}</w:tblGrid><w:tr><w:trPr><w:cantSplit/></w:trPr>${cellsOrdered}</w:tr></w:tbl><w:p><w:pPr><w:spacing w:before="0" w:after="100"/></w:pPr></w:p>`;
+                        }
                     }
-                    antetEl.remove();
+
+                    if (useRunningWordHeader && generatedAntetOOXML) {
+                        headerPartXMLContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+       xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+       xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+       xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+       xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+    ${generatedAntetOOXML}
+</w:hdr>`;
+                    } else if (generatedAntetOOXML) {
+                        bodyPartsXML.push(generatedAntetOOXML);
+                    }
                 }
 
                 // Alt şeridi ayır (en sona eklenecek)
@@ -5250,7 +5353,12 @@
                     bodyPartsXML.push('<w:p/>');
                 }
 
-                // 5. OpenXML Paket Dosyalarını Oluştur ([Content_Types].xml, _rels, document.xml, styles.xml, settings.xml)
+                // 5. OpenXML Paket Dosyalarını Oluştur ([Content_Types].xml, _rels, document.xml, header1.xml, styles.xml, settings.xml)
+                const hasWordRunningHdr = Boolean(headerPartXMLContent);
+                const hdrOverrideXML = hasWordRunningHdr
+                    ? `\n    <Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>`
+                    : '';
+
                 const contentTypesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
     <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
@@ -5258,7 +5366,7 @@
     <Default Extension="png" ContentType="image/png"/>
     <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
     <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
-    <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
+    <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>${hdrOverrideXML}
 </Types>`;
 
                 const rootRelsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -5269,12 +5377,23 @@
                 const mediaRels = mediaItems.map(m =>
                     `<Relationship Id="${m.rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${m.fileName}"/>`
                 ).join('\n    ');
+                const hdrDocRel = hasWordRunningHdr
+                    ? `\n    <Relationship Id="rIdHeader1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>`
+                    : '';
 
                 const docRelsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
     <Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-    <Relationship Id="rIdSettings" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>
+    <Relationship Id="rIdSettings" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>${hdrDocRel}
     ${mediaRels}
+</Relationships>`;
+
+                const hdrMediaRels = headerMediaItems.map(m =>
+                    `<Relationship Id="${m.rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${m.fileName}"/>`
+                ).join('\n    ');
+                const header1RelsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    ${hdrMediaRels}
 </Relationships>`;
 
                 const stylesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -5307,6 +5426,10 @@
     </w:compat>
 </w:settings>`;
 
+                const hdrSectRefXML = hasWordRunningHdr ? `<w:headerReference w:type="default" r:id="rIdHeader1"/>` : '';
+                const pgBordersOOXML = (typeof buildDocxPageBordersXML === 'function') ? buildDocxPageBordersXML(currentPageBorderConfig) : '';
+                const topPageMar = hasWordRunningHdr ? '1420' : '850';
+
                 const documentXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
             xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
@@ -5316,9 +5439,10 @@
     <w:body>
         ${bodyPartsXML.join('\n        ')}
         <w:sectPr>
+            ${hdrSectRefXML}
             <w:pgSz w:w="11906" w:h="16838"/>
-            <w:pgMar w:top="850" w:right="850" w:bottom="964" w:left="850" w:header="450" w:footer="450" w:gutter="0"/>
-            ${buildDocxPageBordersXML(currentPageBorderConfig)}
+            <w:pgMar w:top="${topPageMar}" w:right="850" w:bottom="964" w:left="850" w:header="360" w:footer="450" w:gutter="0"/>
+            ${pgBordersOOXML}
         </w:sectPr>
     </w:body>
 </w:document>`;
@@ -5334,7 +5458,12 @@
                     zip.file('word/styles.xml', stylesXML);
                     zip.file('word/settings.xml', settingsXML);
                     zip.file('word/_rels/document.xml.rels', docRelsXML);
+                    if (hasWordRunningHdr) {
+                        zip.file('word/header1.xml', headerPartXMLContent);
+                        zip.file('word/_rels/header1.xml.rels', header1RelsXML);
+                    }
                     mediaItems.forEach(m => zip.file(`word/media/${m.fileName}`, m.bytes));
+                    headerMediaItems.forEach(m => zip.file(`word/media/${m.fileName}`, m.bytes));
                     docxBlob = await zip.generateAsync({ type: 'blob', mimeType: docxMime, compression: 'DEFLATE' });
                 } else {
                     const entries = [
@@ -5344,7 +5473,12 @@
                         { name: 'word/styles.xml', data: stylesXML },
                         { name: 'word/settings.xml', data: settingsXML },
                         { name: 'word/_rels/document.xml.rels', data: docRelsXML },
-                        ...mediaItems.map(m => ({ name: `word/media/${m.fileName}`, data: m.bytes }))
+                        ...(hasWordRunningHdr ? [
+                            { name: 'word/header1.xml', data: headerPartXMLContent },
+                            { name: 'word/_rels/header1.xml.rels', data: header1RelsXML }
+                        ] : []),
+                        ...mediaItems.map(m => ({ name: `word/media/${m.fileName}`, data: m.bytes })),
+                        ...headerMediaItems.map(m => ({ name: `word/media/${m.fileName}`, data: m.bytes }))
                     ];
                     docxBlob = createFallbackZipBlob(entries, docxMime);
                 }
@@ -5673,27 +5807,40 @@
         function openGuideModal() { openModal('guideModal'); }
 
         // =========================================================================
-        // 16. BOŞ SAYFA YAZMA DÜZELTMESİ & MODERN SAYFA KENARLIĞI MOTORU (v2)
+        // 16. BOŞ SAYFA YAZMA DÜZELTMESİ, SAYFA KENARLIĞI VE KAYITLI ANTET MOTORU
         // =========================================================================
         STORAGE_KEYS.BLANK_BORDER_CFG = 'akilli_bos_sayfa_cerceve_v1';
+        STORAGE_KEYS.ANTET_TEMPLATES  = 'akilli_antet_sablonlar_v1';
+        STORAGE_KEYS.DEFAULT_ANTET_ID = 'akilli_varsayilan_antet_id_v1';
+        STORAGE_KEYS.DOC_HDR_REPEAT   = 'akilli_evrak_antet_tekrar_v1';
+
         const DEFAULT_PAGE_BORDER_CONFIG = {
             side: 'none', style: 'solid', color: '#1e293b',
             widthPx: 3, offsetMm: 9, radiusPx: 0, scope: 'all'
         };
+
         let currentPageBorderConfig = Object.assign({}, DEFAULT_PAGE_BORDER_CONFIG);
+        let savedAntetTemplates = {};
+        let defaultAutoAntetId = '';
+        let currentDocHeaderRepeatMode = 'first'; // 'first' | 'all' | 'none'
+        let currentDocSuppressAutoAntet = false;
         let userTypedDuringBoot = false;
         let bootFinished = false;
 
+        // --- A. BOŞ SAYFA İMLEÇ SABİTLEYİCİ & AKILLI YER TUTUCU ---
         function isEditorVisuallyEmpty(ed) {
             ed = ed || document.getElementById('a4Document');
             if (!ed) return true;
-            if (ed.querySelector('table, img, #epa-kurumsal-antet, #epa-kurumsal-footer, .dynamic-field, .page-break-indicator, ul, ol, hr')) return false;
+            if (ed.querySelector('table, img, #epa-kurumsal-antet, #epa-kurumsal-footer, .dynamic-field, .page-break-indicator, ul, ol, hr')) {
+                return false;
+            }
             return (ed.innerText || '').replace(/[\u200B\r\n\s]+/g, '').length === 0;
         }
 
         function syncSmartPlaceholderVisibility() {
             const ph = document.getElementById('a4SmartPlaceholder');
             if (ph) ph.classList.toggle('hidden-ph', !isEditorVisuallyEmpty());
+            syncDocAntetSwitchUI();
         }
 
         function ensureEditorHasEditableLine(focusCaret = false) {
@@ -5702,7 +5849,6 @@
             if (ed.innerHTML.trim() === '' || ed.innerHTML.trim() === '<br>') {
                 ed.innerHTML = '<div><br></div>';
             }
-            // Sadece antet varsa ve altında yazı satırı yoksa boş satır ekle
             const hasBodyLine = ed.querySelector('div:not(#epa-kurumsal-antet):not(#epa-kurumsal-footer), p, table, ul, ol, h1, h2, h3, h4');
             if (!hasBodyLine) {
                 const footer = ed.querySelector('#epa-kurumsal-footer');
@@ -5745,7 +5891,9 @@
         async function startFreshBlankPage(focusNow = true) {
             const selector = document.getElementById('templateSelector');
             activeTemplateId = '__BLANK__';
+            currentDocSuppressAutoAntet = false;
             await persistDataVerified(STORAGE_KEYS.ACTIVE_TEMPLATE_ID, activeTemplateId);
+
             if (selector) {
                 if (!selector.querySelector('option[value="__BLANK__"]')) {
                     const blankOpt = document.createElement('option');
@@ -5755,13 +5903,19 @@
                 }
                 selector.value = '__BLANK__';
             }
+
             const ed = document.getElementById('a4Document');
             ed.innerHTML = '<div><br></div>';
             document.getElementById('unsavedBanner').classList.add('hidden');
             document.getElementById('unsavedBanner').classList.remove('flex');
+
             const savedBlankBorder = await loadKeyWithMigration(STORAGE_KEYS.BLANK_BORDER_CFG, DEFAULT_PAGE_BORDER_CONFIG);
             syncPageBorderControlsUI(savedBlankBorder);
             renderLivePageBorderOverlay();
+
+            // ⭐ Varsayılan otomatik antet varsa boş sayfaya kendiliğinden uygula!
+            applyDefaultAutoAntetIfConfigured(ed, true);
+
             syncInputsFromDocument(true);
             resetHistoryWithCurrentDOM();
             ensureEditorHasEditableLine(focusNow);
@@ -5769,6 +5923,388 @@
             if (focusNow) showToast('Yeni boş A4 sayfası hazır, doğrudan yazmaya başlayabilirsiniz.', 'info');
         }
 
+        // --- B. KAYITLI ANTET ŞABLONLARI & OTOMATİK VARSAYILAN ANTET MOTORU ---
+        function refreshSavedAntetTemplateSelectors(selectedId = null) {
+            const selToolbar = document.getElementById('savedAntetTemplateSelector');
+            const selPrint   = document.getElementById('printAntetSourceSelect');
+            const keys = Object.keys(savedAntetTemplates);
+
+            if (selToolbar) {
+                const prevVal = selectedId !== null ? selectedId : selToolbar.value;
+                selToolbar.innerHTML = '<option value="">-- Kayıtlı Antet Şablonu Seçin --</option>';
+                keys.forEach(id => {
+                    const item = savedAntetTemplates[id];
+                    const star = (id === defaultAutoAntetId) ? '⭐ ' : '';
+                    const opt = document.createElement('option');
+                    opt.value = id;
+                    opt.innerText = `${star}${item.name}`;
+                    selToolbar.appendChild(opt);
+                });
+                if (prevVal && savedAntetTemplates[prevVal]) selToolbar.value = prevVal;
+                else if (defaultAutoAntetId && savedAntetTemplates[defaultAutoAntetId]) selToolbar.value = defaultAutoAntetId;
+            }
+
+            if (selPrint) {
+                const prevPrint = selPrint.value;
+                selPrint.innerHTML = '<option value="__CURRENT__">📌 Aktif / Kağıttaki Antet</option>';
+                keys.forEach(id => {
+                    const item = savedAntetTemplates[id];
+                    const star = (id === defaultAutoAntetId) ? '⭐ ' : '';
+                    const opt = document.createElement('option');
+                    opt.value = `antet:${id}`;
+                    opt.innerText = `${star}Şablon: ${item.name}`;
+                    selPrint.appendChild(opt);
+                });
+                Object.keys(corporateProfiles).forEach(pid => {
+                    const p = corporateProfiles[pid];
+                    const opt = document.createElement('option');
+                    opt.value = `prof:${pid}`;
+                    opt.innerText = `🏢 Profil: ${p.profileName}`;
+                    selPrint.appendChild(opt);
+                });
+                if (prevPrint && Array.from(selPrint.options).some(o => o.value === prevPrint)) {
+                    selPrint.value = prevPrint;
+                }
+            }
+
+            syncDefaultAntetStarButtonUI();
+            syncDocAntetSwitchUI();
+        }
+
+        function syncDefaultAntetStarButtonUI() {
+            const selToolbar = document.getElementById('savedAntetTemplateSelector');
+            const btn = document.getElementById('btnToggleDefaultAntet');
+            const lbl = document.getElementById('lblDefaultAntetBtn');
+            if (!btn || !lbl || !selToolbar) return;
+
+            const chosenId = selToolbar.value;
+            const isDefault = Boolean(chosenId && chosenId === defaultAutoAntetId);
+            if (isDefault) {
+                btn.className = 'bg-amber-500 hover:bg-amber-600 text-white border border-amber-600 font-extrabold px-2.5 py-1 rounded transition flex items-center gap-1 shadow-2xs';
+                btn.innerHTML = `<i class="fa-solid fa-star text-white"></i> <span id="lblDefaultAntetBtn">Varsayılan Aktif</span>`;
+            } else {
+                btn.className = 'bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold px-2.5 py-1 rounded transition flex items-center gap-1';
+                btn.innerHTML = `<i class="fa-regular fa-star text-amber-500"></i> <span id="lblDefaultAntetBtn">Varsayılan Yap</span>`;
+            }
+        }
+
+        function syncDocAntetSwitchUI() {
+            const btn = document.getElementById('btnDocAntetSwitch');
+            const hasDomAntet = Boolean(document.getElementById('epa-kurumsal-antet'));
+            const repSel = document.getElementById('docHeaderRepeatSelect');
+            if (repSel && repSel.value !== currentDocHeaderRepeatMode) {
+                repSel.value = currentDocHeaderRepeatMode;
+            }
+            if (!btn) return;
+            if (hasDomAntet && currentDocHeaderRepeatMode !== 'none') {
+                btn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded transition flex items-center gap-1';
+                btn.innerHTML = `<i class="fa-solid fa-toggle-on"></i> <span id="lblDocAntetSwitch">Bu Evrakta Antet: Açık</span>`;
+            } else {
+                btn.className = 'bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-2.5 py-1 rounded transition flex items-center gap-1';
+                btn.innerHTML = `<i class="fa-solid fa-toggle-off text-slate-500"></i> <span id="lblDocAntetSwitch">Bu Evrakta Antet: Kapalı</span>`;
+            }
+        }
+
+        function buildProfileSnapshotForAntet(prof, opts) {
+            return {
+                id: prof.id,
+                profileName: prof.profileName,
+                unvan: prof.unvan,
+                titleCaseMode: prof.titleCaseMode || 'upper',
+                firstLineBig: !!prof.firstLineBig,
+                yetki: prof.yetki || '',
+                vergi: prof.vergi || '',
+                telefon: prof.telefon || '',
+                eposta: prof.eposta || '',
+                adres: prof.adres || '',
+                logo: prof.logo || '',
+                opts: Object.assign({}, opts)
+            };
+        }
+
+        function openSaveAntetTemplateModal() {
+            const prof = getActiveProfile();
+            if (!prof) {
+                openCorporateProfileModal(true);
+                showToast('Antet şablonu kaydetmek için önce kurumsal profil oluşturun.', 'info');
+                return;
+            }
+            const suggested = `${prof.profileName} - Kurumsal Antet`;
+            showQuickModal(
+                'Kayıtlı Antet Şablonu Oluştur',
+                `<label class="block font-bold text-slate-700 mb-1">Antet Şablonu Adı *</label>
+                 <input type="text" id="newAntetTplNameInp" value="${escapeHTML(suggested)}" placeholder="Örn: Yeşil 3B Antet, Sade Resmi Antet..." class="w-full px-3 py-2 border border-amber-300 rounded-lg text-xs font-semibold">
+                 <label class="flex items-center gap-2 mt-3 cursor-pointer text-xs font-semibold text-slate-700">
+                    <input type="checkbox" id="setAsDefaultAntetChk" checked class="accent-amber-600">
+                    <span>⭐ Varsayılan Otomatik Antet yap (Yeni sayfa ve Word yüklemelerinde otomatik gelsin)</span>
+                 </label>`,
+                'Antet Şablonunu Kaydet',
+                async function() {
+                    const name = document.getElementById('newAntetTplNameInp').value.trim();
+                    if (!name) {
+                        showToast('Lütfen antet şablonu için bir isim girin.', 'warning');
+                        return;
+                    }
+                    const makeDefault = document.getElementById('setAsDefaultAntetChk').checked;
+                    const opts = readToolbarDesignOptions(prof);
+                    const id = 'antet_tpl_' + Date.now();
+
+                    savedAntetTemplates[id] = {
+                        id,
+                        name,
+                        profileId: prof.id,
+                        snapshot: buildProfileSnapshotForAntet(prof, opts)
+                    };
+
+                    if (makeDefault) {
+                        defaultAutoAntetId = id;
+                        await persistDataVerified(STORAGE_KEYS.DEFAULT_ANTET_ID, defaultAutoAntetId);
+                    }
+                    await persistDataVerified(STORAGE_KEYS.ANTET_TEMPLATES, savedAntetTemplates);
+
+                    closeModal('quickPromptModal');
+                    refreshSavedAntetTemplateSelectors(id);
+
+                    // Kağıtta henüz antet yoksa hemen uygula
+                    if (!document.getElementById('epa-kurumsal-antet')) {
+                        insertCorporateHeader(true, false);
+                    }
+                    showToast(`"${name}" kayıtlı antet şablonlarına eklendi!`);
+                },
+                'bg-amber-600 hover:bg-amber-700'
+            );
+        }
+
+        async function overwriteSelectedAntetTemplate() {
+            const sel = document.getElementById('savedAntetTemplateSelector');
+            const id = sel ? sel.value : '';
+            if (!id || !savedAntetTemplates[id]) {
+                openSaveAntetTemplateModal();
+                return;
+            }
+            const prof = getActiveProfile();
+            if (!prof) {
+                showToast('Aktif kurumsal profil bulunamadı.', 'warning');
+                return;
+            }
+            const opts = readToolbarDesignOptions(prof);
+            savedAntetTemplates[id].profileId = prof.id;
+            savedAntetTemplates[id].snapshot = buildProfileSnapshotForAntet(prof, opts);
+            await persistDataVerified(STORAGE_KEYS.ANTET_TEMPLATES, savedAntetTemplates);
+            showToast(`"${savedAntetTemplates[id].name}" antet şablonu güncellendi!`);
+        }
+
+        async function onSelectSavedAntetTemplate(id) {
+            syncDefaultAntetStarButtonUI();
+            if (!id || !savedAntetTemplates[id]) return;
+
+            const tpl = savedAntetTemplates[id];
+            const snap = tpl.snapshot || {};
+            // İlgili kurumsal profil mevcutsa onu seç ve toolbar ayarlarını şablondan yükle
+            if (tpl.profileId && corporateProfiles[tpl.profileId]) {
+                activeProfileId = tpl.profileId;
+                Object.assign(corporateProfiles[activeProfileId], snap.opts || {});
+                await persistDataVerified(STORAGE_KEYS.ACTIVE_PROFILE_ID, activeProfileId);
+                await persistDataVerified(STORAGE_KEYS.PROFILES, corporateProfiles);
+                refreshCorporateProfileSelector();
+            } else if (snap.unvan) {
+                // Profil silinmişse snapshot'tan geçici/kalıcı profil geri yükle
+                const restoredId = tpl.profileId || ('profil_' + Date.now());
+                corporateProfiles[restoredId] = Object.assign({ id: restoredId }, snap, snap.opts || {});
+                activeProfileId = restoredId;
+                await persistDataVerified(STORAGE_KEYS.PROFILES, corporateProfiles);
+                await persistDataVerified(STORAGE_KEYS.ACTIVE_PROFILE_ID, activeProfileId);
+                refreshCorporateProfileSelector();
+            }
+
+            currentDocSuppressAutoAntet = false;
+            if (currentDocHeaderRepeatMode === 'none') {
+                currentDocHeaderRepeatMode = 'first';
+            }
+            insertCorporateHeader(true, false);
+            syncDocAntetSwitchUI();
+            showToast(`"${tpl.name}" antet şablonu kağıda uygulandı.`);
+        }
+
+        async function toggleDefaultAutoAntet() {
+            const sel = document.getElementById('savedAntetTemplateSelector');
+            let chosenId = sel ? sel.value : '';
+
+            // Henüz kayıtlı şablon seçili değilse doğrudan kaydetme penceresini aç
+            if (!chosenId || !savedAntetTemplates[chosenId]) {
+                openSaveAntetTemplateModal();
+                return;
+            }
+
+            if (defaultAutoAntetId === chosenId) {
+                defaultAutoAntetId = '';
+                await persistDataVerified(STORAGE_KEYS.DEFAULT_ANTET_ID, '');
+                refreshSavedAntetTemplateSelectors(chosenId);
+                showToast('Otomatik varsayılan antet kapatıldı.', 'info');
+            } else {
+                defaultAutoAntetId = chosenId;
+                await persistDataVerified(STORAGE_KEYS.DEFAULT_ANTET_ID, defaultAutoAntetId);
+                refreshSavedAntetTemplateSelectors(chosenId);
+                showToast(`⭐ "${savedAntetTemplates[chosenId].name}" varsayılan antet yapıldı! Yeni evraklarda otomatik gelecek.`);
+            }
+        }
+
+        function deleteSelectedAntetTemplate() {
+            const sel = document.getElementById('savedAntetTemplateSelector');
+            const id = sel ? sel.value : '';
+            if (!id || !savedAntetTemplates[id]) {
+                showToast('Silinecek seçili bir antet şablonu yok.', 'warning');
+                return;
+            }
+            const nm = savedAntetTemplates[id].name;
+            showQuickModal(
+                'Kayıtlı Antet Şablonunu Sil',
+                `<p><b>"${escapeHTML(nm)}"</b> adlı antet şablonunu silmek istediğinize emin misiniz?</p>`,
+                'Evet, Sil',
+                async function() {
+                    delete savedAntetTemplates[id];
+                    if (defaultAutoAntetId === id) {
+                        defaultAutoAntetId = '';
+                        await persistDataVerified(STORAGE_KEYS.DEFAULT_ANTET_ID, '');
+                    }
+                    await persistDataVerified(STORAGE_KEYS.ANTET_TEMPLATES, savedAntetTemplates);
+                    refreshSavedAntetTemplateSelectors('');
+                    closeModal('quickPromptModal');
+                    showToast('Antet şablonu silindi.', 'info');
+                },
+                'bg-rose-600 hover:bg-rose-700'
+            );
+        }
+
+        function resolveAntetProfileAndOptions(antetDomEl = null, sourceKey = '__CURRENT__') {
+            // 1. Önizleme menüsünden özel bir Kayıtlı Antet Şablonu seçildiyse
+            if (sourceKey && sourceKey.startsWith('antet:')) {
+                const tplId = sourceKey.slice(6);
+                const tpl = savedAntetTemplates[tplId];
+                if (tpl && tpl.snapshot) {
+                    const liveProf = (tpl.profileId && corporateProfiles[tpl.profileId]) ? corporateProfiles[tpl.profileId] : null;
+                    const profObj = Object.assign({}, tpl.snapshot, liveProf ? { logo: liveProf.logo || tpl.snapshot.logo } : {});
+                    return { prof: profObj, opts: Object.assign({}, tpl.snapshot.opts) };
+                }
+            }
+            // 2. Önizleme menüsünden doğrudan bir Kurumsal Profil seçildiyse
+            if (sourceKey && sourceKey.startsWith('prof:')) {
+                const pid = sourceKey.slice(5);
+                const p = corporateProfiles[pid];
+                if (p) return { prof: p, opts: readToolbarDesignOptions(p) };
+            }
+            // 3. Kağıdın üzerinde halihazırda ekli #epa-kurumsal-antet varsa
+            if (antetDomEl) {
+                const domProfId = antetDomEl.getAttribute('data-profile-id');
+                const domProf = (domProfId && corporateProfiles[domProfId]) ? corporateProfiles[domProfId] : getActiveProfile();
+                if (domProf) return { prof: domProf, opts: readToolbarDesignOptions(domProf) };
+            }
+            // 4. Kağıtta antet YOKSA bile: Varsayılan Antet Şablonu -> Seçili Antet Şablonu -> Aktif Kurumsal Profil sırasıyla otomatik bul!
+            const selToolbarVal = document.getElementById('savedAntetTemplateSelector')?.value || '';
+            const fallbackTplId = (defaultAutoAntetId && savedAntetTemplates[defaultAutoAntetId])
+                ? defaultAutoAntetId
+                : ((selToolbarVal && savedAntetTemplates[selToolbarVal]) ? selToolbarVal : '');
+
+            if (fallbackTplId) {
+                const tpl = savedAntetTemplates[fallbackTplId];
+                const liveProf = (tpl.profileId && corporateProfiles[tpl.profileId]) ? corporateProfiles[tpl.profileId] : null;
+                const profObj = Object.assign({}, tpl.snapshot, liveProf ? { logo: liveProf.logo || tpl.snapshot.logo } : {});
+                return { prof: profObj, opts: Object.assign({}, tpl.snapshot.opts) };
+            }
+
+            const activeProf = getActiveProfile();
+            if (activeProf) {
+                return { prof: activeProf, opts: readToolbarDesignOptions(activeProf) };
+            }
+            const anyProfKey = Object.keys(corporateProfiles)[0];
+            if (anyProfKey) {
+                const p = corporateProfiles[anyProfKey];
+                return { prof: p, opts: readToolbarDesignOptions(p) };
+            }
+            return null;
+        }
+
+        function applyDefaultAutoAntetIfConfigured(editorEl, silent = true) {
+            if (currentDocSuppressAutoAntet) return false;
+            const ed = editorEl || document.getElementById('a4Document');
+            if (!ed || ed.querySelector('#epa-kurumsal-antet')) return false;
+            if (!defaultAutoAntetId || !savedAntetTemplates[defaultAutoAntetId]) return false;
+
+            const resolved = resolveAntetProfileAndOptions(null, `antet:${defaultAutoAntetId}`);
+            if (!resolved || !resolved.prof) return false;
+
+            const headerHTML = buildCorporateHeaderHTML(resolved.prof, resolved.opts, '');
+            ed.insertAdjacentHTML('afterbegin', headerHTML);
+            if (currentDocHeaderRepeatMode === 'none') currentDocHeaderRepeatMode = 'first';
+            syncDocAntetSwitchUI();
+            if (!silent) showToast(`Varsayılan antet otomatik uygulandı.`);
+            return true;
+        }
+
+        function toggleCurrentDocAntetSwitch() {
+            const ed = document.getElementById('a4Document');
+            const existing = document.getElementById('epa-kurumsal-antet');
+            if (existing) {
+                existing.remove();
+                currentDocSuppressAutoAntet = true;
+                currentDocHeaderRepeatMode = 'none';
+                markDocumentModified('Bu Evrakta Anteti Gizleme');
+                syncDocAntetSwitchUI();
+                showToast('Bu evrak için antet gizlendi.', 'info');
+            } else {
+                currentDocSuppressAutoAntet = false;
+                if (currentDocHeaderRepeatMode === 'none') currentDocHeaderRepeatMode = 'first';
+                const resolved = resolveAntetProfileAndOptions(null, '__CURRENT__');
+                if (!resolved || !resolved.prof) {
+                    openCorporateProfileModal(true);
+                    showToast('Önce kurumsal profilinizi oluşturun.', 'info');
+                    return;
+                }
+                const hdrHTML = buildCorporateHeaderHTML(resolved.prof, resolved.opts, '');
+                ed.insertAdjacentHTML('afterbegin', hdrHTML);
+                ensureEditorHasEditableLine(false);
+                markDocumentModified('Bu Evrakta Anteti Açma');
+                syncDocAntetSwitchUI();
+                showToast('Antet evraka eklendi.');
+            }
+        }
+
+        function onChangeDocHeaderRepeatMode(val) {
+            currentDocHeaderRepeatMode = val || 'first';
+            persistDataVerified(STORAGE_KEYS.DOC_HDR_REPEAT, currentDocHeaderRepeatMode);
+            const printSel = document.getElementById('printRepeatHeaderMode');
+            if (printSel) printSel.value = currentDocHeaderRepeatMode;
+
+            if (currentDocHeaderRepeatMode === 'none') {
+                document.getElementById('epa-kurumsal-antet')?.remove();
+                currentDocSuppressAutoAntet = true;
+            } else if (!document.getElementById('epa-kurumsal-antet')) {
+                currentDocSuppressAutoAntet = false;
+                const resolved = resolveAntetProfileAndOptions(null, '__CURRENT__');
+                if (resolved && resolved.prof) {
+                    document.getElementById('a4Document').insertAdjacentHTML('afterbegin', buildCorporateHeaderHTML(resolved.prof, resolved.opts, ''));
+                }
+            }
+            syncDocAntetSwitchUI();
+            markDocumentModified('Antet Sayfa Tekrar Modu');
+        }
+
+        function onChangePrintRepeatMode(val) {
+            currentDocHeaderRepeatMode = val || 'first';
+            const docRepSel = document.getElementById('docHeaderRepeatSelect');
+            if (docRepSel) docRepSel.value = currentDocHeaderRepeatMode;
+            persistDataVerified(STORAGE_KEYS.DOC_HDR_REPEAT, currentDocHeaderRepeatMode);
+            renderVectorPagedPreview();
+        }
+
+        function getEffectiveDocHeaderRepeatMode() {
+            const hasDomAntet = Boolean(document.getElementById('epa-kurumsal-antet'));
+            if (currentDocHeaderRepeatMode === 'none') return 'none';
+            if (!hasDomAntet && currentDocSuppressAutoAntet) return 'none';
+            return currentDocHeaderRepeatMode || 'first';
+        }
+
+        // --- C. SAYFA KENARLIĞI & MODERN ÇERÇEVE MOTORU ---
         function normalizeBorderConfig(cfg) {
             let r = parseInt(cfg?.radiusPx, 10) || 0;
             if (r === 8) r = 18;
@@ -5809,7 +6345,6 @@
             const hasL = (c.side === 'all' || c.side === 'left' || c.side === 'left_right');
             const hasR = (c.side === 'all' || c.side === 'right' || c.side === 'left_right');
 
-            // 1. Mimari L-Köşebent (Tüm yönlerde köşe ovalliğini destekler)
             if (c.style === 'corners') {
                 const arm = '24mm', bs = `${w}px solid ${col}`;
                 return [
@@ -5828,11 +6363,9 @@
             const innerOp = c.style === 'gallery' ? '0.55' : '0.92';
             const innerR = `${Math.max(2, rPx - gap)}px`;
 
-            // 2. Tek / Çift Taraflı Şeritlerde Köşe > 0 Seçildiğinde Zarif Kavisli Kanca Uçlar (╭ ve ╰)
             if (rPx > 0 && c.side !== 'all') {
                 const capLen = rPx >= 28 ? '28mm' : '20mm';
                 let html = '';
-
                 if (c.side === 'left' || c.side === 'left_right') {
                     html += `<div style="position:absolute;top:${off};bottom:${off};left:${off};width:${capLen};border-left:${ow}px ${lt} ${col};border-top:${ow}px ${lt} ${col};border-bottom:${ow}px ${lt} ${col};border-top-left-radius:${rad};border-bottom-left-radius:${rad};box-sizing:border-box;"></div>`;
                     if (isDoubleLike) {
@@ -5856,7 +6389,6 @@
                 return html;
             }
 
-            // 3. Tam Çerçeve (4 Kenar) veya Keskin (0px) Düz Şeritler
             if (isDoubleLike) {
                 const ob = [hasT?`border-top:${ow}px solid ${col};`:'', hasB?`border-bottom:${ow}px solid ${col};`:'', hasL?`border-left:${ow}px solid ${col};`:'', hasR?`border-right:${ow}px solid ${col};`:''].join('');
                 const ib = [hasT?`border-top:${iw}px solid ${col};`:'', hasB?`border-bottom:${iw}px solid ${col};`:'', hasL?`border-left:${iw}px solid ${col};`:'', hasR?`border-right:${iw}px solid ${col};`:''].join('');
@@ -5930,6 +6462,228 @@
                 `</w:pgBorders>`;
         }
 
+        // --- D. PAGED.JS VEKTÖREL BASKI STÜDYOSU (SIFIR ÇİFT ANTET & DİNAMİK YÜKSEKLİK) ---
+        openVectorPrintStudio = function() {
+            refreshSavedAntetTemplateSelectors();
+            const printModeSel = document.getElementById('printRepeatHeaderMode');
+            if (printModeSel) {
+                printModeSel.value = currentDocHeaderRepeatMode || 'first';
+            }
+            openModal('printStudioModal');
+            renderVectorPagedPreview();
+        };
+
+        renderVectorPagedPreview = function() {
+            const iframe = document.getElementById('pagedPreviewIframe');
+            const spinner = document.getElementById('pagedLoadingSpinner');
+            const badge = document.getElementById('pagedPageCountBadge');
+            if (spinner) spinner.classList.remove('hidden');
+            if (badge) badge.innerText = 'Sayfalar Diziliyor...';
+
+            const repeatHeader = document.getElementById('printRepeatHeaderMode')?.value || 'first';
+            const antetSource  = document.getElementById('printAntetSourceSelect')?.value || '__CURRENT__';
+            const autoPageNo   = document.getElementById('printAutoPageNumbers').checked;
+            const parafLine    = document.getElementById('printParafLine').checked;
+            const emptyMode    = document.getElementById('printEmptyFieldMode').value;
+
+            const clone = document.getElementById('a4Document').cloneNode(true);
+
+            // 1. Mevcut kağıt içi anteti ayır ve klondan tamamen kaldır (Çift antet binmesini %100 önler!)
+            const existingAntetEl = clone.querySelector('#epa-kurumsal-antet');
+            const existingQrBox = existingAntetEl ? existingAntetEl.querySelector('.antet-qr-box') : null;
+            const savedQrHTML = existingQrBox ? existingQrBox.outerHTML : '';
+            if (existingAntetEl) existingAntetEl.remove();
+
+            // 2. İstenen antet HTML'ini hazırla (Kağıtta antet olmasa bile Kayıtlı Antet / Aktif Profilden üretir!)
+            let activeHeaderHTML = '';
+            let measuredHeaderMm = 26;
+
+            if (repeatHeader !== 'none') {
+                if (antetSource === '__CURRENT__' && existingAntetEl) {
+                    const cleanCloneAntet = existingAntetEl.cloneNode(true);
+                    cleanCloneAntet.style.marginBottom = (repeatHeader === 'all') ? '0px' : '16px';
+                    activeHeaderHTML = cleanCloneAntet.outerHTML;
+                } else {
+                    const resolved = resolveAntetProfileAndOptions(existingAntetEl, antetSource);
+                    if (resolved && resolved.prof) {
+                        activeHeaderHTML = buildCorporateHeaderHTML(resolved.prof, resolved.opts, savedQrHTML);
+                    }
+                }
+
+                // Antetin gerçek milimetrik yüksekliğini gizli A4 genişliğinde ölç (2. ve 3. sayfada metne binmemesi için)
+                if (activeHeaderHTML && repeatHeader === 'all') {
+                    const probe = document.createElement('div');
+                    probe.style.cssText = 'position:fixed; left:-9999px; top:0; width:180mm; visibility:hidden; pointer-events:none;';
+                    probe.innerHTML = activeHeaderHTML;
+                    const probeAntet = probe.querySelector('#epa-kurumsal-antet');
+                    if (probeAntet) probeAntet.style.marginBottom = '0px';
+                    document.body.appendChild(probe);
+                    const pxH = probe.getBoundingClientRect().height || 90;
+                    document.body.removeChild(probe);
+                    measuredHeaderMm = Math.ceil(pxH / getPixelsPerMm());
+                    // Her sayfada üst şeritte kullanılacak antetin alt boşluğunu sıfırla
+                    activeHeaderHTML = probe.innerHTML;
+                }
+            }
+
+            // Sadece 1. Sayfada modunda anteti doğrudan 1. sayfanın en başına yerleştir
+            if (repeatHeader === 'first' && activeHeaderHTML) {
+                clone.insertAdjacentHTML('afterbegin', activeHeaderHTML);
+            }
+
+            // 3. Akıllı kapsülleri baskı metnine çevir
+            clone.querySelectorAll('.dynamic-field').forEach(sp => {
+                if (sp.classList.contains('filled-capsule')) {
+                    const strong = document.createElement('strong');
+                    strong.innerText = sp.innerText;
+                    sp.parentNode.replaceChild(strong, sp);
+                } else {
+                    const fallbackTxt = emptyMode === 'dotted' ? '..............................' : '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
+                    sp.parentNode.replaceChild(document.createTextNode(fallbackTxt), sp);
+                }
+            });
+
+            clone.querySelectorAll('.page-break-indicator').forEach(pb => {
+                const brk = document.createElement('div');
+                brk.className = 'forced-page-break';
+                pb.parentNode.replaceChild(brk, pb);
+            });
+
+            promoteDataTableHeaders(clone);
+            ensureSignatureKeepTogether(clone);
+
+            const topMarginMm = (repeatHeader === 'all' && activeHeaderHTML)
+                ? Math.max(34, 14 + measuredHeaderMm + 6)
+                : 15;
+
+            const bottomRightCSS = autoPageNo
+                ? `@bottom-right { content: "Sayfa " counter(page) " / " counter(pages); font-family: 'Inter', Arial, sans-serif; font-size: 9pt; font-weight: 600; color: #475569; }`
+                : '';
+            const bottomLeftCSS = parafLine
+                ? `@bottom-left { content: "Taraflar Paraf: ........................"; font-family: 'Inter', Arial, sans-serif; font-size: 8.5pt; color: #64748b; }`
+                : '';
+
+            const borderBoxHTML = buildPageBorderBoxInnerHTML(currentPageBorderConfig);
+            const borderScopeOnlyFirst = currentPageBorderConfig.scope === 'first';
+            const injectRepeatingHeader = (repeatHeader === 'all' && activeHeaderHTML) ? activeHeaderHTML : '';
+            const docTitle = escapeHTML(getSelectedTemplateTitle());
+
+            iframe.srcdoc = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>${docTitle}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    @page {
+        size: A4 portrait;
+        margin: ${topMarginMm}mm 15mm 19mm 15mm;
+        ${bottomLeftCSS}
+        ${bottomRightCSS}
+    }
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 11pt;
+        line-height: 1.35;
+        color: #0f172a;
+        margin: 0; padding: 0;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    @media screen {
+        body { background-color: #1e293b; padding: 28px 0 60px 0; }
+        .pagedjs_pages { display: flex; flex-direction: column; align-items: center; gap: 28px; }
+        .pagedjs_page { background: #ffffff; box-shadow: 0 20px 45px rgba(0,0,0,0.45); border-radius: 3px; position: relative; }
+    }
+    @media print {
+        body { background: #ffffff !important; padding: 0 !important; margin: 0 !important; }
+        .pagedjs_page { box-shadow: none !important; margin: 0 !important; position: relative; }
+    }
+    h1, h2, h3, h4, h5 { margin: 8px 0 10px 0; font-weight: bold; break-after: avoid; page-break-after: avoid; }
+    p, div { margin-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 10.5pt; break-inside: auto; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+    td, th { border: 1px solid #64748b; padding: 6.5px 10px; vertical-align: middle; }
+    #epa-kurumsal-antet { display: flex !important; width: 100% !important; box-sizing: border-box !important; position: relative !important; overflow: hidden !important; }
+    #epa-kurumsal-antet.antet-dir-row { flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; }
+    #epa-kurumsal-antet.antet-dir-col { flex-direction: column !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: center !important; }
+    #epa-kurumsal-antet #epa-antet-logo-slot { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important; gap: 8px !important; position: relative !important; z-index: 2 !important; }
+    #epa-kurumsal-antet #epa-antet-logo-slot.antet-slot-empty { display: none !important; }
+    #epa-kurumsal-antet #epa-antet-text-slot { flex: 1 1 auto !important; min-width: 0 !important; position: relative !important; z-index: 2 !important; }
+    .signature-block, .keep-together { break-inside: avoid; page-break-inside: avoid; }
+    .forced-page-break { break-before: page; page-break-before: always; height: 0; }
+</style>
+<script>
+    const INJECT_HEADER_HTML = ${JSON.stringify(injectRepeatingHeader)};
+    const INJECT_BORDER_HTML = ${JSON.stringify(borderBoxHTML)};
+    const BORDER_ONLY_FIRST  = ${borderScopeOnlyFirst};
+
+    window.PagedConfig = {
+        auto: true,
+        after: function(flow) {
+            document.querySelectorAll('.pagedjs_page').forEach((pg, idx) => {
+                pg.style.position = 'relative';
+                // 1) Her Sayfada Tekrarla seçiliyse her .pagedjs_page'in üst boşluğuna tek ve net antet yerleştir (Çift antet imkansız!)
+                if (INJECT_HEADER_HTML) {
+                    const hdrSlot = document.createElement('div');
+                    hdrSlot.style.cssText = 'position:absolute; top:12mm; left:15mm; right:15mm; z-index:18; pointer-events:none;';
+                    hdrSlot.innerHTML = INJECT_HEADER_HTML;
+                    pg.appendChild(hdrSlot);
+                }
+                // 2) Sayfa Kenarlığı / Modern Çerçeve varsa sayfaya yerleştir
+                if (INJECT_BORDER_HTML && (!BORDER_ONLY_FIRST || idx === 0)) {
+                    const bWrap = document.createElement('div');
+                    bWrap.style.cssText = 'position:absolute; inset:0; pointer-events:none; z-index:20;';
+                    bWrap.innerHTML = INJECT_BORDER_HTML;
+                    pg.appendChild(bWrap);
+                }
+            });
+            window.parent.postMessage({ type: 'AKILLI_PAGED_RENDERED', pageCount: flow.total }, '*');
+        }
+    };
+<\/script>
+<script src="https://unpkg.com/pagedjs/dist/paged.polyfill.js" onerror="window.parent.postMessage({ type: 'AKILLI_PAGED_RENDERED', pageCount: 1 }, '*')"><\/script>
+</head>
+<body>${clone.innerHTML}</body>
+</html>`;
+
+            setTimeout(() => {
+                spinner?.classList.add('hidden');
+            }, 3500);
+        };
+
+        // --- E. MEVCUT ŞABLON YÖNETİMİNE VE WORD İÇE AKTARMAYA OTOMATİK KANCA (HOOK) ---
+        const _origInsertCorporateHeader = insertCorporateHeader;
+        insertCorporateHeader = function(silent = false, skipHistory = false) {
+            currentDocSuppressAutoAntet = false;
+            if (currentDocHeaderRepeatMode === 'none') currentDocHeaderRepeatMode = 'first';
+            _origInsertCorporateHeader(silent, skipHistory);
+            ensureEditorHasEditableLine(false);
+            syncDocAntetSwitchUI();
+        };
+
+        const _origRemoveCorporateHeaderAndFooter = removeCorporateHeaderAndFooter;
+        removeCorporateHeaderAndFooter = function() {
+            currentDocSuppressAutoAntet = true;
+            _origRemoveCorporateHeaderAndFooter();
+            syncDocAntetSwitchUI();
+        };
+
+        const _origSaveAndSelectNewTemplate = saveAndSelectNewTemplate;
+        saveAndSelectNewTemplate = async function(name, htmlContent) {
+            currentDocSuppressAutoAntet = false;
+            // Yeni yüklenen Word/Excel şablonunda antet yoksa ve ⭐ Varsayılan Antet seçiliyse otomatik en üste ekle!
+            if (defaultAutoAntetId && savedAntetTemplates[defaultAutoAntetId] && !String(htmlContent).includes('id="epa-kurumsal-antet"')) {
+                const resolved = resolveAntetProfileAndOptions(null, `antet:${defaultAutoAntetId}`);
+                if (resolved && resolved.prof) {
+                    const autoHdr = buildCorporateHeaderHTML(resolved.prof, resolved.opts, '');
+                    htmlContent = compactEditorHTMLForStorage(autoHdr + htmlContent);
+                }
+            }
+            await _origSaveAndSelectNewTemplate(name, htmlContent);
+        };
+
         const _origRefreshTemplateDropdown = refreshTemplateDropdown;
         refreshTemplateDropdown = function(selectKey = null) {
             const savedEarlyHTML = (!bootFinished && userTypedDuringBoot) ? document.getElementById('a4Document').innerHTML : null;
@@ -5955,21 +6709,33 @@
         const _origLoadSelectedTemplate = loadSelectedTemplate;
         loadSelectedTemplate = function() {
             const key = document.getElementById('templateSelector').value;
+            currentDocSuppressAutoAntet = false;
+
             if (key === '__BLANK__' || !key || !contractTemplates[key]) {
                 const ed = document.getElementById('a4Document');
                 ed.innerHTML = '<div><br></div>';
                 syncPageBorderControlsUI(safeGetStorage(STORAGE_KEYS.BLANK_BORDER_CFG, DEFAULT_PAGE_BORDER_CONFIG));
                 renderLivePageBorderOverlay();
+                applyDefaultAutoAntetIfConfigured(ed, true);
                 ensureEditorHasEditableLine(false);
                 resetHistoryWithCurrentDOM();
                 syncInputsFromDocument(true);
                 updateLivePageBoundaryGuides();
+                syncDocAntetSwitchUI();
                 return;
             }
+
             _origLoadSelectedTemplate();
-            syncPageBorderControlsUI(contractTemplates[key].borderConfig || DEFAULT_PAGE_BORDER_CONFIG);
+            const tplObj = contractTemplates[key];
+            syncPageBorderControlsUI(tplObj.borderConfig || DEFAULT_PAGE_BORDER_CONFIG);
+            if (tplObj.headerRepeatMode) {
+                currentDocHeaderRepeatMode = tplObj.headerRepeatMode;
+            } else {
+                currentDocHeaderRepeatMode = 'first';
+            }
             renderLivePageBorderOverlay();
             ensureEditorHasEditableLine(false);
+            syncDocAntetSwitchUI();
         };
 
         const _origUpdateCurrentTemplate = updateCurrentTemplate;
@@ -5977,51 +6743,63 @@
             const key = document.getElementById('templateSelector').value;
             if (key && contractTemplates[key]) {
                 contractTemplates[key].borderConfig = normalizeBorderConfig(currentPageBorderConfig);
+                contractTemplates[key].headerRepeatMode = currentDocHeaderRepeatMode;
             }
             await _origUpdateCurrentTemplate();
         };
 
-        const _origRenderVectorPagedPreview = renderVectorPagedPreview;
-        renderVectorPagedPreview = function() {
-            _origRenderVectorPagedPreview();
-            const iframe = document.getElementById('pagedPreviewIframe');
-            const borderHTML = buildPageBorderBoxInnerHTML(currentPageBorderConfig);
-            if (!iframe || !borderHTML) return;
-            const scopeOnlyFirst = currentPageBorderConfig.scope === 'first';
-            const injectScript = `
-                <script>
-                    const _oldAfter = window.PagedConfig.after;
-                    window.PagedConfig.after = function(flow) {
-                        document.querySelectorAll('.pagedjs_page').forEach((pg, idx) => {
-                            if (${scopeOnlyFirst} && idx > 0) return;
-                            pg.style.position = 'relative';
-                            const bWrap = document.createElement('div');
-                            bWrap.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:20;';
-                            bWrap.innerHTML = ${JSON.stringify(borderHTML)};
-                            pg.appendChild(bWrap);
-                        });
-                        if (_oldAfter) _oldAfter(flow);
-                    };
-                <\/script>`;
-            iframe.srcdoc = iframe.srcdoc.replace('</head>', injectScript + '</head>');
+        // Geri Al / İleri Al sonrası çerçeve ve placeholder senkronu
+        const _origPerformUndo = performUndo;
+        performUndo = function() {
+            _origPerformUndo();
+            ensureEditorHasEditableLine(false);
+        };
+        const _origPerformRedo = performRedo;
+        performRedo = function() {
+            _origPerformRedo();
+            ensureEditorHasEditableLine(false);
         };
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Köşe menüsü değerlerini A4 üzerinde belirgin görünecek ölçeğe yükselt
-            const radSel = document.getElementById('pageBorderRadius');
-            if (radSel) {
-                radSel.innerHTML = `
-                    <option value="0">Köşe: Keskin (0px)</option>
-                    <option value="18">Köşe: Modern Oval (18px)</option>
-                    <option value="34">Köşe: Geniş Kıvrım (34px)</option>
-                `;
+        // Kayıtlı Antet Şablonlarını IndexedDB'den Yükle (Mevcut Kurumsal Profil varsa ilk şablonu otomatik hazırla)
+        async function bootAntetTemplatesAndBorders() {
+            savedAntetTemplates = await loadKeyWithMigration(STORAGE_KEYS.ANTET_TEMPLATES, {});
+            defaultAutoAntetId  = await loadKeyWithMigration(STORAGE_KEYS.DEFAULT_ANTET_ID, '');
+            currentDocHeaderRepeatMode = await loadKeyWithMigration(STORAGE_KEYS.DOC_HDR_REPEAT, 'first');
+
+            // Kullanıcının daha önceden oluşturduğu kurumsal profil varsa ve henüz hiç antet şablonu kaydedilmemişse otomatik hazır şablon oluştur
+            if (Object.keys(savedAntetTemplates).length === 0 && Object.keys(corporateProfiles).length > 0) {
+                const pid = activeProfileId && corporateProfiles[activeProfileId] ? activeProfileId : Object.keys(corporateProfiles)[0];
+                const prof = corporateProfiles[pid];
+                if (prof) {
+                    const autoId = 'antet_tpl_initial';
+                    const opts = readToolbarDesignOptions(prof);
+                    savedAntetTemplates[autoId] = {
+                        id: autoId,
+                        name: `${prof.profileName} Anteti`,
+                        profileId: pid,
+                        snapshot: buildProfileSnapshotForAntet(prof, opts)
+                    };
+                    await persistDataVerified(STORAGE_KEYS.ANTET_TEMPLATES, savedAntetTemplates);
+                }
             }
 
+            refreshSavedAntetTemplateSelectors();
+            const key = document.getElementById('templateSelector')?.value;
+            if (!key || key === '__BLANK__' || !contractTemplates[key]) {
+                const blankBorder = await loadKeyWithMigration(STORAGE_KEYS.BLANK_BORDER_CFG, DEFAULT_PAGE_BORDER_CONFIG);
+                syncPageBorderControlsUI(blankBorder);
+                renderLivePageBorderOverlay();
+                applyDefaultAutoAntetIfConfigured(document.getElementById('a4Document'), true);
+                ensureEditorHasEditableLine(false);
+            }
+            syncDocAntetSwitchUI();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
             const ed = document.getElementById('a4Document');
             ensureEditorHasEditableLine(false);
             renderLivePageBorderOverlay();
 
-            // Antet, Tablo, QR veya Geri Al gibi her türlü DOM değişiminde silik ipucu yazısını anında gizle
             const domObserver = new MutationObserver(function() {
                 syncSmartPlaceholderVisibility();
             });
@@ -6032,6 +6810,9 @@
                 syncSmartPlaceholderVisibility();
             });
             ed.addEventListener('keyup', syncSmartPlaceholderVisibility);
+
+            // Ana initPersistentDataAndUI tamamlandıktan hemen sonra antet şablonlarını devreye al
+            setTimeout(bootAntetTemplatesAndBorders, 180);
         });
     </script>
 </body>
